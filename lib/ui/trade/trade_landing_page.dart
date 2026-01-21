@@ -16,6 +16,14 @@ class _POSLandingPageState extends State<POSLandingPage> {
   bool isPaymentMode = false;
   String enteredAmount = "";
   String selectedPayment = "Cash";
+
+  // Customer Data
+  String customerName = "Ram gopal renu";
+  String customerPhone = "98000000000";
+  String customerAddress = "Pokhara 7, zero";
+  String customerPan = "303437013";
+  String invoiceNumber = "1500";
+  String customerBalance = "0";
   void addItem(Product product, {int quantity = 1}) {
     setState(() {
       final index = items.indexWhere((item) => item.name == product.name);
@@ -62,6 +70,10 @@ class _POSLandingPageState extends State<POSLandingPage> {
             child: OrderSidebar(
               items: items,
               isPaymentMode: isPaymentMode,
+              customerName: customerName,
+              customerPhone: customerPhone,
+              customerAddress: customerAddress,
+              customerBalance: customerPan,
               onRemove: (index) {
                 setState(() {
                   items.removeAt(index);
@@ -84,6 +96,11 @@ class _POSLandingPageState extends State<POSLandingPage> {
                     total: total,
                     enteredAmount: enteredAmount,
                     selectedPayment: selectedPayment,
+                    invoiceNumber: invoiceNumber,
+                    customerName: customerName,
+                    customerPhone: customerPhone,
+                    customerAddress: customerAddress,
+                    customerPan: customerPan,
                     onPaymentModeChanged: (mode) {
                       setState(() {
                         selectedPayment = mode;
@@ -232,6 +249,10 @@ class OrderSidebar extends StatefulWidget {
   final bool isPaymentMode;
   final Function(int) onRemove;
   final Function(int, int) onQuantityChange;
+  final String customerName;
+  final String customerPhone;
+  final String customerAddress;
+  final String customerBalance;
 
   const OrderSidebar({
     super.key,
@@ -239,6 +260,10 @@ class OrderSidebar extends StatefulWidget {
     required this.isPaymentMode,
     required this.onRemove,
     required this.onQuantityChange,
+    required this.customerName,
+    required this.customerPhone,
+    required this.customerAddress,
+    required this.customerBalance,
   });
 
   @override
@@ -247,6 +272,11 @@ class OrderSidebar extends StatefulWidget {
 
 class _OrderSidebarState extends State<OrderSidebar> {
   bool showSummary = false;
+  double _orderDiscount = 0.0;
+  double _deliveryCharges = 0.0;
+  double _packageCharges = 0.0;
+  String _couponCode = "";
+
   void _showEditItemDialog(BuildContext context, int index) {
     final item = widget.items[index];
     int tempQty = item.quantity;
@@ -676,20 +706,226 @@ class _OrderSidebarState extends State<OrderSidebar> {
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontWeight: isBold! ? FontWeight.bold : FontWeight.normal,
-            fontSize: isBold ? 16 : 14,
-          ),
+          style: TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
         ),
         Text(
           value,
           style: TextStyle(
-            fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-            fontSize: isBold ? 18 : 14,
+            fontWeight: FontWeight.normal,
+            fontSize: 14,
             color: color,
           ),
         ),
       ],
+    );
+  }
+
+  void _showDiscountSheet() {
+    double tempDiscount = _orderDiscount;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Add Discount",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                keyboardType: TextInputType.number,
+                controller: TextEditingController(
+                  text: tempDiscount > 0 ? tempDiscount.toString() : '',
+                ),
+                decoration: const InputDecoration(
+                  labelText: "Discount Amount (Rs)",
+                  border: OutlineInputBorder(),
+                  prefixText: "Rs ",
+                ),
+                onChanged: (val) {
+                  tempDiscount = double.tryParse(val) ?? 0.0;
+                },
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _orderDiscount = tempDiscount;
+                    });
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text("Apply Discount"),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showCouponSheet() {
+    String tempCoupon = _couponCode;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Apply Coupon",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: TextEditingController(text: tempCoupon),
+                decoration: const InputDecoration(
+                  labelText: "Coupon Code",
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.confirmation_number_outlined),
+                ),
+                onChanged: (val) {
+                  tempCoupon = val;
+                },
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _couponCode = tempCoupon;
+                    });
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text("Apply Coupon"),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showChargesSheet() {
+    double tempDelivery = _deliveryCharges;
+    double tempPackage = _packageCharges;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Extra Charges",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                keyboardType: TextInputType.number,
+                controller: TextEditingController(
+                  text: tempDelivery > 0 ? tempDelivery.toString() : '',
+                ),
+                decoration: const InputDecoration(
+                  labelText: "Delivery Charges (Rs)",
+                  border: OutlineInputBorder(),
+                  prefixText: "Rs ",
+                ),
+                onChanged: (val) {
+                  tempDelivery = double.tryParse(val) ?? 0.0;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                keyboardType: TextInputType.number,
+                controller: TextEditingController(
+                  text: tempPackage > 0 ? tempPackage.toString() : '',
+                ),
+                decoration: const InputDecoration(
+                  labelText: "Package Charges (Rs)",
+                  border: OutlineInputBorder(),
+                  prefixText: "Rs ",
+                ),
+                onChanged: (val) {
+                  tempPackage = double.tryParse(val) ?? 0.0;
+                },
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _deliveryCharges = tempDelivery;
+                      _packageCharges = tempPackage;
+                    });
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text("Apply Charges"),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -700,7 +936,8 @@ class _OrderSidebarState extends State<OrderSidebar> {
       (double sum, OrderItem item) => sum + (item.price * item.quantity),
     );
     final tax = subtotal * 0.13;
-    final total = subtotal + tax;
+    final total =
+        subtotal + tax - _orderDiscount + _deliveryCharges + _packageCharges;
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
@@ -712,38 +949,28 @@ class _OrderSidebarState extends State<OrderSidebar> {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Icon(Icons.menu, color: Colors.grey),
               TextButton(
                 onPressed: () {},
                 child: Column(
                   children: [
-                    Icon(Icons.menu),
-                    Text("Menu", style: TextStyle(fontSize: 10)),
+                    Icon(Icons.person, color: Color(0xFF10B981).withAlpha(200)),
+                    Text(
+                      "Customer",
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Color(0xFF10B981).withAlpha(200),
+                      ),
+                    ),
                   ],
                 ),
               ),
+
               TextButton(
                 onPressed: () {},
                 child: Column(
                   children: [
-                    Icon(Icons.person),
-                    Text("Customer", style: TextStyle(fontSize: 10)),
-                  ],
-                ),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: Column(
-                  children: [
-                    Icon(Icons.card_travel),
-                    Text("ClearCart", style: TextStyle(fontSize: 10)),
-                  ],
-                ),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: Column(
-                  children: [
-                    Icon(Icons.drafts),
+                    Icon(Icons.drafts, color: Colors.grey),
                     Text("Draft", style: TextStyle(fontSize: 10)),
                   ],
                 ),
@@ -755,7 +982,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "Ram gopal renu | 98000000000 ",
+                "${widget.customerName} | ${widget.customerPhone}",
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -764,10 +991,10 @@ class _OrderSidebarState extends State<OrderSidebar> {
               ),
               Row(
                 children: [
-                  IconButton(
-                    onPressed: () {},
-                    icon: Icon(Icons.edit, size: 17),
-                  ),
+                  // IconButton(
+                  //   onPressed: () {},
+                  //   icon: Icon(Icons.edit, size: 17),
+                  // ),
                   CloseButton(
                     color: Colors.red,
                     style: ButtonStyle(
@@ -780,9 +1007,17 @@ class _OrderSidebarState extends State<OrderSidebar> {
             ],
           ),
           Text(
-            "Pokhara 7, zero",
-            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+            "Outstanding Balance: ${widget.customerBalance}",
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1E293B),
+            ),
           ),
+          // Text(
+          //   widget.customerAddress,
+          //   style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+          // ),
           Divider(thickness: 1, color: const Color(0xFFE2E8F0)),
           // Item List
           Expanded(
@@ -824,12 +1059,14 @@ class _OrderSidebarState extends State<OrderSidebar> {
           ),
           // Summary Section
           Container(
-            padding: const EdgeInsets.all(16),
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             decoration: BoxDecoration(
               color: const Color(0xFFF8FAFC),
               border: Border(top: BorderSide(color: Colors.grey[200]!)),
             ),
             child: Column(
+              spacing: 2,
               children: [
                 if (showSummary) ...[
                   _summaryRow(
@@ -837,13 +1074,75 @@ class _OrderSidebarState extends State<OrderSidebar> {
                     "Rs ${subtotal.toStringAsFixed(2)}",
                     true,
                   ),
-                  const SizedBox(height: 8),
                   _summaryRow(
                     "Tax (13%)",
                     "Rs ${tax.toStringAsFixed(2)}",
                     true,
                   ),
-                  const SizedBox(height: 12),
+                  if (_orderDiscount > 0)
+                    _summaryRow(
+                      "Discount",
+                      "- Rs ${_orderDiscount.toStringAsFixed(2)}",
+                      true,
+                      color: Colors.red,
+                    ),
+                  if (_deliveryCharges > 0)
+                    _summaryRow(
+                      "Delivery Charges",
+                      "Rs ${_deliveryCharges.toStringAsFixed(2)}",
+                      true,
+                    ),
+                  if (_packageCharges > 0)
+                    _summaryRow(
+                      "Package Charges",
+                      "Rs ${_packageCharges.toStringAsFixed(2)}",
+                      true,
+                    ),
+
+                  Container(
+                    height: 35,
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF10B981).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Apply>", style: TextStyle(fontSize: 14)),
+                        TextButton(
+                          onPressed: _showDiscountSheet,
+                          child: Text(
+                            "Discount",
+                            style: TextStyle(
+                              fontWeight: FontWeight.normal,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: _showCouponSheet,
+                          child: Text(
+                            "Coupon",
+                            style: TextStyle(
+                              fontWeight: FontWeight.normal,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: _showChargesSheet,
+                          child: Text(
+                            "Charges",
+                            style: TextStyle(
+                              fontWeight: FontWeight.normal,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   Divider(color: Colors.grey[300]),
                 ],
                 Row(
@@ -877,9 +1176,9 @@ class _OrderSidebarState extends State<OrderSidebar> {
                         Text(
                           "Rs ${total.toStringAsFixed(2)}",
                           style: const TextStyle(
-                            fontSize: 20,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF10B981),
+                            color: Colors.black,
                           ),
                         ),
                       ],
@@ -891,7 +1190,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                   children: [
                     const SizedBox(width: 6),
                     Text(
-                      "(${widget.items.length} items ${widget.items.fold<int>(0, (int sum, OrderItem item) => sum + item.quantity)} quantity)",
+                      "${widget.items.length} items | ${widget.items.fold<int>(0, (int sum, OrderItem item) => sum + item.quantity)} units | Discount Item",
                       style: const TextStyle(
                         fontSize: 13,
                         color: Color(0xFF64748B),

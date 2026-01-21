@@ -251,7 +251,7 @@ class _MainProductAreaState extends State<MainProductArea> {
                     curve: Curves.easeInOut,
                     child: _actionIconButton(
                       showCategory ? Icons.chevron_left : Icons.chevron_right,
-                      "",
+                      showCategory ? 'Category' : '',
                       () {
                         setState(() {
                           showCategory = !showCategory;
@@ -359,7 +359,7 @@ class _MainProductAreaState extends State<MainProductArea> {
                     width: 180,
                     color: Colors.white,
                     child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 2),
                       itemCount: categories.length,
                       itemBuilder: (context, index) {
                         final category = categories[index];
@@ -371,13 +371,9 @@ class _MainProductAreaState extends State<MainProductArea> {
                             });
                           },
                           child: Container(
-                            margin: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
-                              vertical: 10,
+                              vertical: 5,
                             ),
                             decoration: BoxDecoration(
                               color: isSelected
@@ -400,9 +396,7 @@ class _MainProductAreaState extends State<MainProductArea> {
                                 fontWeight: isSelected
                                     ? FontWeight.w600
                                     : FontWeight.normal,
-                                color: isSelected
-                                    ? Colors.black
-                                    : const Color(0xFF64748B),
+                                color: isSelected ? Colors.black : Colors.black,
                               ),
                             ),
                           ),
@@ -412,7 +406,6 @@ class _MainProductAreaState extends State<MainProductArea> {
                   ),
                 ),
               ),
-
               // Right side (Products)
               Expanded(
                 child: filteredProducts.isEmpty
@@ -484,6 +477,7 @@ class _MainProductAreaState extends State<MainProductArea> {
                 25,
                 Colors.grey,
               ),
+
               Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFFF1F5F9),
@@ -507,9 +501,28 @@ class _MainProductAreaState extends State<MainProductArea> {
               const Spacer(),
               Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
+                  color: const Color(0xFF10B981).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey[300]!, width: 1),
+                  border: Border.all(
+                    color: Color(0xFF10B981).withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+                child: IconButton(
+                  onPressed: () {},
+                  icon: Icon(Icons.delete, size: 25),
+                ),
+              ),
+
+              const SizedBox(width: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Color(0xFF10B981).withValues(alpha: 0.2),
+                    width: 1,
+                  ),
                 ),
                 child: IconButton(
                   onPressed: () {},

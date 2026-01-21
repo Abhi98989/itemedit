@@ -12,6 +12,7 @@ class WeightItemDialog extends StatefulWidget {
   @override
   State<WeightItemDialog> createState() => _WeightItemDialogState();
 }
+
 class _WeightItemDialogState extends State<WeightItemDialog> {
   String _quantity = "1";
 
