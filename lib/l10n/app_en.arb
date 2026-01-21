@@ -1,0 +1,12 @@
+{
+  "edit": "Edit",
+  "add": "Add",
+  "menu_item": "Menu Item",
+  "item_name": "Item Name",
+  "item_description": "Item Description",
+  "category": "Category",
+  "unit": "Unit",
+  "sales_price": "Sales Price",
+  "tax_type": "Tax Type",
+  "cost_price": "Cost Price"
+}
