@@ -260,3 +260,38 @@ final List<OrderItem> orderItems = <OrderItem>[
   OrderItem(name: "Coke", quantity: 1, price: 80, category: "Beverages"),
   OrderItem(name: "Ice Cream", quantity: 1, price: 150, category: "Dessert"),
 ];
+//customer
+class Customer {
+  String name;
+  String phone;
+  String address;
+  String outstandingbalance;
+
+
+  Customer({
+    required this.name,
+    required this.phone,
+    required this.address,
+    required this.outstandingbalance,
+  });
+}
+final List<Customer> customers = <Customer>[
+  Customer(
+    name: "John Doe",
+    phone: "1234567890",
+    address: "123 Main St, Anytown USA",
+    outstandingbalance: "100.00",
+  ),
+  Customer(
+    name: "Jane Doe",
+    phone: "9876543210",
+    address: "456 Elm St, Anytown USA",
+    outstandingbalance: "50.00",
+  ),
+  Customer(
+    name: "Bob Smith",
+    phone: "5555555555",
+    address: "789 Oak St, Anytown USA",
+    outstandingbalance: "75.00",
+  ),
+];

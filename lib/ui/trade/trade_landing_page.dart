@@ -18,12 +18,118 @@ class _POSLandingPageState extends State<POSLandingPage> {
   String selectedPayment = "Cash";
 
   // Customer Data
-  String customerName = "Ram gopal renu";
-  String customerPhone = "98000000000";
-  String customerAddress = "Pokhara 7, zero";
-  String customerPan = "303437013";
-  String invoiceNumber = "1500";
-  String customerBalance = "0";
+  Customer? selectedCustomer;
+  bool isCustomerSelected = false;
+  String customerName = "";
+  String customerPhone = "";
+  String customerAddress = "";
+  String customerPan = "";
+  String invoiceNumber = "";
+  String customerBalance = "";
+
+  void _showCustomerSelectionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            width: 500,
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Select Customer",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const Divider(),
+                const SizedBox(height: 10),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 400),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: customers.length,
+                    itemBuilder: (context, index) {
+                      final customer = customers[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 4),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: const Color(0xFF10B981),
+                            child: Text(
+                              customer.name[0].toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            customer.name,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Phone: ${customer.phone}"),
+                              Text("Address: ${customer.address}"),
+                              Text(
+                                "Outstanding: Rs ${customer.outstandingbalance}",
+                                style: const TextStyle(
+                                  color: Colors.orange,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                          isThreeLine: true,
+                          onTap: () {
+                            setState(() {
+                              selectedCustomer = customer;
+                              isCustomerSelected = true;
+                              customerName = customer.name;
+                              customerPhone = customer.phone;
+                              customerAddress = customer.address;
+                              customerBalance = customer.outstandingbalance;
+                            });
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Selected: ${customer.name}"),
+                                backgroundColor: const Color(0xFF10B981),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void addItem(Product product, {int quantity = 1}) {
     setState(() {
       final index = items.indexWhere((item) => item.name == product.name);
@@ -55,35 +161,48 @@ class _POSLandingPageState extends State<POSLandingPage> {
       body: Row(
         children: [
           // Left Sidebar (Order Details) - Always visible
-          Container(
+          SizedBox(
             width: 380,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(2, 0),
-                ),
-              ],
-            ),
-            child: OrderSidebar(
-              items: items,
-              isPaymentMode: isPaymentMode,
-              customerName: customerName,
-              customerPhone: customerPhone,
-              customerAddress: customerAddress,
-              customerBalance: customerPan,
-              onRemove: (index) {
-                setState(() {
-                  items.removeAt(index);
-                });
-              },
-              onQuantityChange: (index, newQty) {
-                setState(() {
-                  items[index].quantity = newQty;
-                });
-              },
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(2, 0),
+                  ),
+                ],
+              ),
+              child: OrderSidebar(
+                items: items,
+                isPaymentMode: isPaymentMode,
+                customerName: customerName,
+                customerPhone: customerPhone,
+                customerAddress: customerAddress,
+                customerBalance: customerBalance,
+                onRemove: (index) {
+                  setState(() {
+                    items.removeAt(index);
+                  });
+                },
+                onQuantityChange: (index, newQty) {
+                  setState(() {
+                    items[index].quantity = newQty;
+                  });
+                },
+                onCustomerSelect: _showCustomerSelectionDialog,
+                onCustomerClear: () {
+                  setState(() {
+                    selectedCustomer = null;
+                    isCustomerSelected = false;
+                    customerName = "";
+                    customerPhone = "";
+                    customerAddress = "";
+                    customerBalance = "";
+                  });
+                },
+              ),
             ),
           ),
           // Main Content Area (Product Grid / Payment Content)
@@ -253,6 +372,8 @@ class OrderSidebar extends StatefulWidget {
   final String customerPhone;
   final String customerAddress;
   final String customerBalance;
+  final VoidCallback onCustomerSelect;
+  final VoidCallback onCustomerClear;
 
   const OrderSidebar({
     super.key,
@@ -264,6 +385,8 @@ class OrderSidebar extends StatefulWidget {
     required this.customerPhone,
     required this.customerAddress,
     required this.customerBalance,
+    required this.onCustomerSelect,
+    required this.onCustomerClear,
   });
 
   @override
@@ -285,7 +408,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
     bool tempIsFree = item.isFree;
     bool discountTypeA = false;
     bool discountTypeB = false;
-    String offerType = tempIsFree ? "free" : "discount";
+    String? offerType; // No default selection
     final noteController = TextEditingController(text: tempNote);
 
     showDialog(
@@ -308,17 +431,15 @@ class _OrderSidebarState extends State<OrderSidebar> {
                 ),
                 child: Container(
                   width: 400,
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(20),
                   child: SingleChildScrollView(
                     child: Column(
-                      spacing: 10,
+                      spacing: 16,
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Header
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             IconButton(
                               icon: const Icon(Icons.close),
@@ -339,59 +460,23 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                   Text(
                                     "Rs ${item.price.toStringAsFixed(2)}",
                                     style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.grey[700],
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            Expanded(
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  // backgroundColor: Theme.of(
-                                  //   context,
-                                  // ).primaryColor,
-                                  // foregroundColor: Colors.white,
-                                  // minimumSize: const Size(double.infinity, 40),
-                                  // tapTargetSize:
-                                  //     MaterialTapTargetSize.shrinkWrap,
-                                ),
-                                onPressed: () {
-                                  widget.onQuantityChange(index, tempQty);
-                                  setState(() {
-                                    item.note = noteController.text;
-                                    item.discount = tempDiscount;
-                                    item.isFree = tempIsFree;
-                                  });
-                                  Navigator.pop(context);
-                                },
-                                child: const Text(
-                                  "Save",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
+                            const SizedBox(width: 48),
                           ],
                         ),
-                        const Divider(height: 12),
+                        const Divider(),
                         // Quantity
-                        Center(
-                          child: const Text(
-                            "Quantity",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
+                        const Text(
+                          "Quantity",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                         Row(
@@ -408,18 +493,32 @@ class _OrderSidebarState extends State<OrderSidebar> {
                               ),
                               child: Column(
                                 children: [
-                                  Text(
-                                    "$tempQty",
-                                    style: const TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.bold,
+                                  SizedBox(
+                                    width: 80,
+                                    child: TextField(
+                                      controller: TextEditingController(
+                                        text: tempQty.toString(),
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      keyboardType: TextInputType.number,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 24,
+                                      ),
+                                      onChanged: (val) {
+                                        final qty = int.tryParse(val);
+                                        if (qty != null && qty > 0) {
+                                          setDialogState(() => tempQty = qty);
+                                        }
+                                      },
                                     ),
                                   ),
+                                  const SizedBox(height: 4),
                                   Text(
                                     "Rs ${subtotal.toStringAsFixed(2)}",
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w500,
+                                    style: TextStyle(
                                       fontSize: 14,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ],
@@ -435,11 +534,11 @@ class _OrderSidebarState extends State<OrderSidebar> {
                           controller: noteController,
                           decoration: InputDecoration(
                             labelText: "Note",
-                            hintText: "Add a note",
+                            hintText: "Add a note for the item",
                             prefixIcon: const Icon(Icons.edit_note),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                            // border: OutlineInputBorder(
+                            //   borderRadius: BorderRadius.circular(12),
+                            // ),
                           ),
                         ),
                         // Apply Offer
@@ -461,6 +560,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                 () => setDialogState(() {
                                   offerType = "discount";
                                   tempIsFree = false;
+                                  tempDiscount = 0;
                                 }),
                               ),
                             ),
@@ -474,11 +574,13 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                 () => setDialogState(() {
                                   offerType = "free";
                                   tempIsFree = true;
+                                  tempDiscount = 0;
                                 }),
                               ),
                             ),
                           ],
                         ),
+
                         if (offerType == "discount") ...[
                           // Discount Types
                           Container(
@@ -532,70 +634,114 @@ class _OrderSidebarState extends State<OrderSidebar> {
                             ],
                           ),
                         ],
+
                         // Summary
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
-                            borderRadius: BorderRadius.circular(12),
+                        if (offerType != null)
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              children: [
+                                if (offerType == "discount")
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text("Discount:"),
+                                      Text(
+                                        "Rs ${tempDiscount.toStringAsFixed(2)}",
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                if (offerType == "discount")
+                                  const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      "Total:",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    Text(
+                                      offerType == "free"
+                                          ? "FREE"
+                                          : "Rs ${total.toStringAsFixed(2)}",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: offerType == "free"
+                                            ? Colors.green
+                                            : null,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text("Discount:"),
-                                  Text(
-                                    "Rs ${tempDiscount.toStringAsFixed(2)}",
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text(
-                                    "Total:",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  Text(
-                                    "Rs ${total.toStringAsFixed(2)}",
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
+
                         // Buttons
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              widget.onRemove(index);
-                              Navigator.pop(context);
-                            },
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.red,
-                              side: const BorderSide(color: Colors.red),
-                              padding: const EdgeInsets.symmetric(vertical: 18),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  widget.onRemove(index);
+                                  Navigator.pop(context);
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                  side: const BorderSide(color: Colors.red),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: const Text("Remove"),
                               ),
                             ),
-                            child: const Text("Remove"),
-                          ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  widget.onQuantityChange(index, tempQty);
+                                  setState(() {
+                                    item.note = noteController.text;
+                                    item.discount = tempDiscount;
+                                    item.isFree = tempIsFree;
+                                  });
+                                  Navigator.pop(context);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: const Text(
+                                  "Save",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -938,11 +1084,12 @@ class _OrderSidebarState extends State<OrderSidebar> {
     final tax = subtotal * 0.13;
     final total =
         subtotal + tax - _orderDiscount + _deliveryCharges + _packageCharges;
+    bool customerSelected = widget.customerName.isNotEmpty;
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           // Top Header
           Row(
@@ -951,21 +1098,27 @@ class _OrderSidebarState extends State<OrderSidebar> {
             children: [
               Icon(Icons.menu, color: Colors.grey),
               TextButton(
-                onPressed: () {},
+                onPressed: widget.onCustomerSelect,
                 child: Column(
                   children: [
-                    Icon(Icons.person, color: Color(0xFF10B981).withAlpha(200)),
+                    Icon(
+                      Icons.person,
+                      color: customerSelected
+                          ? Color(0xFF10B981).withAlpha(200)
+                          : Colors.grey,
+                    ),
                     Text(
                       "Customer",
                       style: TextStyle(
                         fontSize: 10,
-                        color: Color(0xFF10B981).withAlpha(200),
+                        color: customerSelected
+                            ? Color(0xFF10B981).withAlpha(200)
+                            : Colors.grey,
                       ),
                     ),
                   ],
                 ),
               ),
-
               TextButton(
                 onPressed: () {},
                 child: Column(
@@ -981,43 +1134,40 @@ class _OrderSidebarState extends State<OrderSidebar> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                "${widget.customerName} | ${widget.customerPhone}",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF1E293B),
+              Expanded(
+                child: Text(
+                  widget.customerName.isEmpty
+                      ? "No customer selected"
+                      : "${widget.customerName} | ${widget.customerPhone}",
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: widget.customerName.isEmpty
+                        ? Colors.grey
+                        : Color(0xFF1E293B),
+                  ),
                 ),
               ),
-              Row(
-                children: [
-                  // IconButton(
-                  //   onPressed: () {},
-                  //   icon: Icon(Icons.edit, size: 17),
-                  // ),
-                  CloseButton(
-                    color: Colors.red,
-                    style: ButtonStyle(
-                      shape: WidgetStatePropertyAll(CircleBorder()),
-                      iconSize: WidgetStatePropertyAll(17),
-                    ),
+              if (widget.customerName.isNotEmpty)
+                CloseButton(
+                  onPressed: widget.onCustomerClear,
+                  color: Colors.red,
+                  style: ButtonStyle(
+                    shape: WidgetStatePropertyAll(CircleBorder()),
+                    iconSize: WidgetStatePropertyAll(17),
                   ),
-                ],
-              ),
+                ),
             ],
           ),
-          Text(
-            "Outstanding Balance: ${widget.customerBalance}",
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1E293B),
+          if (widget.customerBalance.isNotEmpty)
+            Text(
+              "Outstanding Balance: Rs ${widget.customerBalance}",
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1E293B),
+              ),
             ),
-          ),
-          // Text(
-          //   widget.customerAddress,
-          //   style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-          // ),
           Divider(thickness: 1, color: const Color(0xFFE2E8F0)),
           // Item List
           Expanded(
@@ -1060,7 +1210,8 @@ class _OrderSidebarState extends State<OrderSidebar> {
           // Summary Section
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            margin: const EdgeInsets.only(top: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             decoration: BoxDecoration(
               color: const Color(0xFFF8FAFC),
               border: Border(top: BorderSide(color: Colors.grey[200]!)),
@@ -1109,7 +1260,17 @@ class _OrderSidebarState extends State<OrderSidebar> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("Apply>", style: TextStyle(fontSize: 14)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Apply", style: TextStyle(fontSize: 14)),
+                            Icon(
+                              Icons.keyboard_double_arrow_right_rounded,
+                              size: 20,
+                            ),
+                          ],
+                        ),
                         TextButton(
                           onPressed: _showDiscountSheet,
                           child: Text(
@@ -1131,7 +1292,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                           ),
                         ),
                         TextButton(
-                          onPressed: _showChargesSheet,
+                          onPressed: () {},
                           child: Text(
                             "Charges",
                             style: TextStyle(
@@ -1143,7 +1304,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                       ],
                     ),
                   ),
-                  Divider(color: Colors.grey[300]),
+                  // Divider(color: Colors.grey[300]),
                 ],
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1185,17 +1346,26 @@ class _OrderSidebarState extends State<OrderSidebar> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
                 Row(
                   children: [
                     const SizedBox(width: 6),
                     Text(
-                      "${widget.items.length} items | ${widget.items.fold<int>(0, (int sum, OrderItem item) => sum + item.quantity)} units | Discount Item",
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF64748B),
-                      ),
+                      "${widget.items.length} items | ${widget.items.fold<int>(0, (int sum, OrderItem item) => sum + item.quantity)} units",
+                      style: const TextStyle(fontSize: 13),
                     ),
+                    // Show count of items with discount
+                    if (widget.items
+                        .where((item) => (item.discount ?? 0) > 0)
+                        .isNotEmpty)
+                      Text(
+                        " | ${widget.items.where((item) => (item.discount ?? 0) > 0).length} discount",
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    if (widget.items.where((item) => (item.isFree)).isNotEmpty)
+                      Text(
+                        " | ${widget.items.where((item) => (item.isFree)).length} Fere",
+                        style: const TextStyle(fontSize: 13),
+                      ),
                   ],
                 ),
               ],

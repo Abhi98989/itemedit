@@ -126,117 +126,50 @@ class _PaymentBodyState extends State<PaymentBody> {
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Total Amount Display
-                    Column(
-                      children: [
-                        Text(
-                          "Rs ${widget.total.toStringAsFixed(2)}",
-                          style: const TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E293B),
+                    Center(
+                      child: Column(
+                        children: [
+                          Text(
+                            "Rs ${widget.total.toStringAsFixed(2)}",
+                            style: const TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E293B),
+                            ),
                           ),
-                        ),
-                        const Text(
-                          "Total amount",
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF64748B),
+                          const Text(
+                            "Total amount",
+                            style: TextStyle(fontSize: 14),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 20),
                     // Cash Received Input
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            "Cash Received",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            "Rs ${widget.enteredAmount.isEmpty ? '0' : widget.enteredAmount}",
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Checkout Type
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          "Checkout Type:",
+                          "Cash Received",
                           style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF64748B),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        _checkoutTypeRadio("Serve Now"),
-                        _checkoutTypeRadio("Pickup Later"),
-                        _checkoutTypeRadio("Delivery"),
+                        Text(
+                          "Rs ${widget.enteredAmount.isEmpty ? '0' : widget.enteredAmount}",
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    // Main Content: Methods & Numpad
-                    Expanded(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Payment Methods (Left Column)
-                          SizedBox(
-                            width: 140,
-                            child: Column(
-                              children: [
-                                _paymentMethodButton("Cash"),
-                                _paymentMethodButton("Credit Sale"),
-                                _paymentMethodButton("Union Pay"),
-                                _paymentMethodButton("Gift Card"),
-                                _paymentMethodButton("Reward"),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          // Numpad (Right Column)
-                          Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey),
-                              ),
-                              child: Column(
-                                children: [
-                                  _numpadRow(["7", "8", "9"]),
-                                  _numpadRow(["4", "5", "6"]),
-                                  _numpadRow(["1", "2", "3"]),
-                                  _numpadRow([".", "0", "00"]),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Tips & Notes
+                    const Divider(),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -285,6 +218,69 @@ class _PaymentBodyState extends State<PaymentBody> {
                             ],
                           ),
                         ),
+                      ],
+                    ),
+                    SizedBox(height: 1),
+                    const Text(
+                      "Checkout Type:",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                    // Checkout Type
+                    Row(
+                      children: [
+                        _checkoutTypeRadio("Serve Now"),
+                        _checkoutTypeRadio("Pickup Later"),
+                        _checkoutTypeRadio("Delivery"),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Main Content: Methods & Numpad
+                    Expanded(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Payment Methods (Left Column)
+                          SizedBox(
+                            width: 140,
+                            child: Column(
+                              children: [
+                                _paymentMethodButton("Cash"),
+                                _paymentMethodButton("Credit Sale"),
+                                _paymentMethodButton("Union Pay"),
+                                _paymentMethodButton("Gift Card"),
+                                _paymentMethodButton("Reward"),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          // Numpad (Right Column)
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                              ),
+                              child: Column(
+                                children: [
+                                  _numpadRow(["7", "8", "9"]),
+                                  _numpadRow(["4", "5", "6"]),
+                                  _numpadRow(["1", "2", "3"]),
+                                  _numpadRow([".", "0", "00"]),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Tips & Notes
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         const SizedBox(width: 16),
                         Expanded(
                           child: TextField(
@@ -318,9 +314,8 @@ class _PaymentBodyState extends State<PaymentBody> {
               Text(
                 "Change Rs ${_calculateChange()}",
                 style: const TextStyle(
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.orange,
                 ),
               ),
               ElevatedButton(
