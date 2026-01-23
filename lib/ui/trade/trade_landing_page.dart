@@ -28,121 +28,331 @@ class _POSLandingPageState extends State<POSLandingPage> {
   String customerBalance = "";
 
   void _showCustomerSelectionDialog() {
+    final TextEditingController searchController = TextEditingController();
     showDialog(
+      barrierDismissible: false,
       context: context,
       builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Container(
-            width: 500,
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "Select Customer",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'SanFrancisco',
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
+        return StatefulBuilder(
+          builder: (context, setState) {
+            // Filter customers based on search query
+            List<dynamic> filteredCustomers = customers.where((customer) {
+              final searchQuery = searchController.text.toLowerCase();
+              final name = customer.name.toLowerCase();
+              final phone = customer.phone.toLowerCase();
+              return name.contains(searchQuery) || phone.contains(searchQuery);
+            }).toList();
+            return BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+              child: Dialog(
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(3),
                 ),
-                const Divider(),
-                const SizedBox(height: 10),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 400),
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: customers.length,
-                    itemBuilder: (context, index) {
-                      final customer = customers[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: const Color(0xff7CD23D),
-                            child: Text(
-                              customer.name[0].toUpperCase(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
+                child: Container(
+                  color: Colors.white,
+                  width: 700,
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Select Customer",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'SanFrancisco',
                             ),
                           ),
-                          title: Text(
-                            customer.name,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          TextButton(
+                            onPressed: () {
+                              //todo
+                            },
+                            child: Text(
+                              "Add",
+                              style: TextStyle(fontFamily: 'SanFrancisco'),
+                            ),
                           ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Phone: ${customer.phone}",
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: 'SanFrancisco',
-                                ),
-                              ),
-                              Text(
-                                "Address: ${customer.address}",
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: 'SanFrancisco',
-                                ),
-                              ),
-                              Text(
-                                "Outstanding: Rs ${customer.outstandingbalance}",
-                                style: const TextStyle(
-                                  color: Colors.orange,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () {
+                              searchController.dispose();
+                              Navigator.pop(context);
+                            },
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
                           ),
-                          isThreeLine: true,
-                          onTap: () {
-                            setState(() {
-                              selectedCustomer = customer;
-                              isCustomerSelected = true;
-                              customerName = customer.name;
-                              customerPhone = customer.phone;
-                              customerAddress = customer.address;
-                              customerBalance = customer.outstandingbalance;
-                            });
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  "Selected: ${customer.name}",
-                                  style: const TextStyle(
-                                    fontFamily: 'SanFrancisco',
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Search Field
+                      TextField(
+                        controller: searchController,
+                        onChanged: (value) {
+                          setState(() {}); // Rebuild to update filtered list
+                        },
+                        decoration: InputDecoration(
+                          hintText: "Search by name or phone number",
+                          hintStyle: TextStyle(
+                            color: Colors.grey.shade400,
+                            fontSize: 14,
+                            fontFamily: 'SanFrancisco',
+                          ),
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: Colors.grey.shade600,
+                            size: 20,
+                          ),
+                          suffixIcon: searchController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: Icon(
+                                    Icons.clear,
+                                    color: Colors.grey.shade600,
+                                    size: 20,
+                                  ),
+                                  onPressed: () {
+                                    searchController.clear();
+                                    setState(() {});
+                                  },
+                                )
+                              : null,
+                          filled: true,
+                          fillColor: Colors.grey.shade50,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              color: Color(0xff7CD23D),
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontFamily: 'SanFrancisco',
+                        ),
+                      ),
+                      // const Divider(height: 1),
+                      // Customer List
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 400),
+                        child: filteredCustomers.isEmpty
+                            ? Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(40),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.person_off_outlined,
+                                        size: 48,
+                                        color: Colors.grey.shade400,
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        searchController.text.isEmpty
+                                            ? "No customers found"
+                                            : "No matching customers",
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.grey.shade600,
+                                          fontWeight: FontWeight.w500,
+                                          fontFamily: 'SanFrancisco',
+                                        ),
+                                      ),
+                                      if (searchController.text.isNotEmpty)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 8,
+                                          ),
+                                          child: Text(
+                                            "Try different search terms",
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.grey.shade500,
+                                              fontFamily: 'SanFrancisco',
+                                            ),
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                 ),
-                                backgroundColor: const Color(0xff7CD23D),
-                                duration: const Duration(seconds: 2),
+                              )
+                            : ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: filteredCustomers.length,
+                                itemBuilder: (context, index) {
+                                  final customer = filteredCustomers[index];
+                                  return Card(
+                                    color: Colors.white,
+                                    margin: const EdgeInsets.symmetric(
+                                      vertical: 4,
+                                    ),
+                                    elevation: 1,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: ListTile(
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 8,
+                                          ),
+                                      leading: CircleAvatar(
+                                        radius: 22,
+                                        backgroundColor: const Color(
+                                          0xff7CD23D,
+                                        ),
+                                        child: Text(
+                                          customer.name[0].toUpperCase(),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 18,
+                                          ),
+                                        ),
+                                      ),
+                                      title: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            customer.name,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 15,
+                                              fontFamily: 'SanFrancisco',
+                                            ),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              //todo
+                                            },
+                                            child: Text(
+                                              "View",
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w500,
+                                                fontFamily: 'SanFrancisco',
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      subtitle: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const SizedBox(height: 4),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.phone,
+                                                size: 13,
+                                                color: Colors.grey.shade600,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                customer.phone,
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Colors.grey.shade700,
+                                                  fontFamily: 'SanFrancisco',
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.location_on_outlined,
+                                                size: 13,
+                                                color: Colors.grey.shade600,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Expanded(
+                                                child: Text(
+                                                  customer.address,
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: Colors.grey.shade700,
+                                                    fontFamily: 'SanFrancisco',
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 3,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange.shade50,
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              "Outstanding: Rs ${customer.outstandingbalance}",
+                                              style: const TextStyle(
+                                                color: Colors.orange,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 12,
+                                                fontFamily: 'SanFrancisco',
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      isThreeLine: true,
+                                      onTap: () {
+                                        // Use the outer setState to update the parent widget
+                                        this.setState(() {
+                                          selectedCustomer = customer;
+                                          isCustomerSelected = true;
+                                          customerName = customer.name;
+                                          customerPhone = customer.phone;
+                                          customerAddress = customer.address;
+                                          customerBalance =
+                                              customer.outstandingbalance;
+                                        });
+                                        searchController.dispose();
+                                        Navigator.pop(context);
+                                      },
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                          },
-                        ),
-                      );
-                    },
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
@@ -181,7 +391,7 @@ class _POSLandingPageState extends State<POSLandingPage> {
     final tax = subtotal * 0.13;
     final total = subtotal + tax;
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: Colors.white,
       body: Row(
         children: [
           // Left Sidebar (Order Details) - Always visible
@@ -451,20 +661,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
 
   // Store dynamic charges
   final List<Map<String, dynamic>> _customCharges = [];
-  final List<Map<String, dynamic>> _chargeTypes = [
-    // {
-    //   "name": "Service Charge",
-    //   "value": 5.0,
-    //   "type": "percentage", // percentage | amount
-    //   "active": false,
-    // },
-    // {
-    //   "name": "Handling Charge",
-    //   "value": 50.0,
-    //   "type": "amount",
-    //   "active": false,
-    // },
-  ];
+  final List<Map<String, dynamic>> _chargeTypes = [];
 
   void _showEditItemDialog(BuildContext context, int index) {
     final item = widget.items[index];
@@ -505,13 +702,13 @@ class _OrderSidebarState extends State<OrderSidebar> {
                           mainAxisAlignment: MainAxisAlignment.start,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            IconButton(
-                              icon: const Icon(Icons.close),
-                              onPressed: () => Navigator.pop(context),
-                            ),
                             Expanded(
-                              child: Column(
+                              child: Row(
                                 children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.close),
+                                    onPressed: () => Navigator.pop(context),
+                                  ),
                                   Text(
                                     item.name,
                                     style: const TextStyle(
@@ -521,7 +718,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                     textAlign: TextAlign.center,
                                   ),
                                   Text(
-                                    "Rs ${item.price}",
+                                    " - Rs ${item.price}",
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
@@ -531,38 +728,36 @@ class _OrderSidebarState extends State<OrderSidebar> {
                               ),
                             ),
                             const SizedBox(width: 48),
-                            Expanded(
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  // backgroundColor: Color(0xff7CD23D),
-                                  elevation: 0,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 11,
-                                    vertical: 8,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    side: const BorderSide(
-                                      color: Color(0xff7CD23D),
-                                    ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                // backgroundColor: Color(0xff7CD23D),
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 11,
+                                  vertical: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  side: const BorderSide(
+                                    color: Color(0xff7CD23D),
                                   ),
                                 ),
-                                onPressed: () {
-                                  widget.onQuantityChange(index, tempQty);
-                                  setState(() {
-                                    item.note = noteController.text;
-                                    item.discount = tempDiscount;
-                                    item.isFree = tempIsFree;
-                                  });
-                                  Navigator.pop(context);
-                                },
-                                child: const Text(
-                                  "Save",
-                                  style: TextStyle(
-                                    color: Color(0xff7CD23D),
-                                    fontFamily: 'SanFrancisco',
-                                    fontSize: 17,
-                                  ),
+                              ),
+                              onPressed: () {
+                                widget.onQuantityChange(index, tempQty);
+                                setState(() {
+                                  item.note = noteController.text;
+                                  item.discount = tempDiscount;
+                                  item.isFree = tempIsFree;
+                                });
+                                Navigator.pop(context);
+                              },
+                              child: const Text(
+                                "Save",
+                                style: TextStyle(
+                                  color: Color(0xff7CD23D),
+                                  fontFamily: 'SanFrancisco',
+                                  fontSize: 17,
                                 ),
                               ),
                             ),
@@ -615,6 +810,8 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                     "Rs ${subtotal.toStringAsFixed(2)}",
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w600,
+                                      fontSize: 16,
+                                      fontFamily: 'SanFrancisco',
                                     ),
                                   ),
                                 ],
@@ -750,7 +947,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _inputField("Percentage", "%", (v) {
+                                    _inputField("Percentage", "% ", (v) {
                                       final p = double.tryParse(v) ?? 0;
                                       setDialogState(() {
                                         tempDiscount = subtotal * p / 100;
@@ -774,7 +971,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _inputField("Amount", "Rs", (v) {
+                                    _inputField("Amount", "Rs ", (v) {
                                       final p = double.tryParse(v) ?? 0;
                                       setDialogState(() {
                                         tempDiscount = p * tempQty;
@@ -798,33 +995,26 @@ class _OrderSidebarState extends State<OrderSidebar> {
 
                         /// SUMMARY
                         if (offerType != null)
-                          Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  "Total",
-                                  style: TextStyle(fontWeight: FontWeight.bold),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                "Total",
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                offerType == "free"
+                                    ? "FREE"
+                                    : "Rs ${total.toStringAsFixed(2)}",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: offerType == "free"
+                                      ? Colors.green
+                                      : Colors.black,
                                 ),
-                                Text(
-                                  offerType == "free"
-                                      ? "FREE"
-                                      : "Rs ${total.toStringAsFixed(2)}",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: offerType == "free"
-                                        ? Colors.green
-                                        : Colors.black,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         const SizedBox(height: 20),
 
@@ -902,32 +1092,21 @@ class _OrderSidebarState extends State<OrderSidebar> {
     );
   }
 
-  Widget _toggleRow(String label, bool value, ValueChanged<bool> onChanged) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: const TextStyle(fontFamily: 'SanFrancisco')),
-        Switch(value: value, onChanged: onChanged),
-      ],
-    );
-  }
-
   Widget _inputField(
     String label,
-    String hint,
+    // String hint,
+    String prefix,
     ValueChanged<String> onChanged,
   ) {
     return TextField(
       keyboardType: TextInputType.number,
       onChanged: onChanged,
       decoration: InputDecoration(
-        hintText: hint,
+        // hintText: hint,
         hintStyle: const TextStyle(fontFamily: 'SanFrancisco'),
+        prefix: Text(prefix),
         labelText: label,
         labelStyle: const TextStyle(fontFamily: 'SanFrancisco', fontSize: 13),
-
-        // border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        // contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       ),
     );
   }
@@ -1739,53 +1918,73 @@ class _OrderSidebarState extends State<OrderSidebar> {
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           // Top Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.menu, color: Colors.grey),
-              TextButton(
-                onPressed: widget.onCustomerSelect,
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.person,
-                      color: customerSelected
-                          ? Color(0xff7CD23D).withAlpha(200)
-                          : Colors.grey,
-                    ),
-                    Text(
-                      "Customer",
-                      style: TextStyle(
-                        fontSize: 10,
+          IntrinsicHeight(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.menu, color: Colors.black),
+                VerticalDivider(
+                  color: Colors.grey[300],
+                  thickness: 1,
+                  indent: 5,
+                  endIndent: 5,
+                ),
+                TextButton(
+                  onPressed: widget.onCustomerSelect,
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.person,
                         color: customerSelected
-                            ? Color(0xff7CD23D).withAlpha(200)
-                            : Colors.grey,
-                        fontFamily: 'SanFrancisco',
+                            ? Color(0xff7CD23D)
+                            : Colors.black,
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: Column(
-                  children: [
-                    Icon(Icons.drafts, color: Colors.grey),
-                    Text(
-                      "Draft",
-                      style: TextStyle(
-                        fontFamily: 'SanFrancisco',
-                        fontSize: 10,
-                        color: Colors.grey,
+                      Text(
+                        "Customer",
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: customerSelected
+                              ? Color(0xff7CD23D)
+                              : Colors.black,
+                          fontFamily: 'SanFrancisco',
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                VerticalDivider(
+                  color: Colors.grey[300],
+                  thickness: 1,
+                  indent: 5,
+                  endIndent: 5,
+                ),
+                TextButton(
+                  onPressed: () {},
+                  child: Column(
+                    children: [
+                      Icon(Icons.drafts, color: Colors.black),
+                      Text(
+                        "Draft",
+                        style: TextStyle(
+                          fontFamily: 'SanFrancisco',
+                          fontSize: 10,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                VerticalDivider(
+                  color: Colors.grey[300],
+                  thickness: 1,
+                  indent: 5,
+                  endIndent: 5,
+                ),
+              ],
+            ),
           ),
-          SizedBox(height: 6),
+          // SizedBox(height: 8),
           Divider(color: const Color(0xFFE2E8F0)),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1856,7 +2055,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    // padding: const EdgeInsets.symmetric(vertical: 4),
                     itemCount: widget.items.length,
                     itemBuilder: (context, index) {
                       return OrderItemTile(
@@ -2022,18 +2221,17 @@ class _OrderSidebarState extends State<OrderSidebar> {
                       constraints: const BoxConstraints(),
                       padding: EdgeInsets.zero,
                     ),
-                    Row(
-                      children: [
-                        Text(
-                          "Rs ${total.toStringAsFixed(2)}",
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                            fontFamily: 'SanFrancisco',
-                          ),
+                    SizedBox(
+                      width: 180,
+                      child: Text(
+                        "Rs ${total.toStringAsFixed(2)}",
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                          fontFamily: 'SanFrancisco',
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),

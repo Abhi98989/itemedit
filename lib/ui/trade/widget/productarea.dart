@@ -644,11 +644,16 @@ class _MainProductAreaState extends State<MainProductArea> {
                 ),
               ),
               const SizedBox(width: 8),
-              _actionButton(
-                "Pay: ${widget.price}",
-                const Color(0xff7CD23D),
-                Colors.white,
-                widget.onPaymentClick,
+              SizedBox(
+                width: 200,
+                child: Center(
+                  child: _actionButton(
+                    "Rs ${widget.price}",
+                    const Color(0xff7CD23D),
+                    Colors.white,
+                    widget.onPaymentClick,
+                  ),
+                ),
               ),
             ],
           ),
@@ -728,13 +733,26 @@ class _MainProductAreaState extends State<MainProductArea> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
       onPressed: onPressed,
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontFamily: 'SanFrancisco',
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
+      child: Row(
+        spacing: 4,
+        children: [
+          Text(
+            "Pay",
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'SanFrancisco',
+            ),
+          ),
+          Text(
+            text,
+            style: const TextStyle(
+              fontFamily: 'SanFrancisco',
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
