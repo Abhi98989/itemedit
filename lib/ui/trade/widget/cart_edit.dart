@@ -20,15 +20,11 @@ class CartEdit extends StatelessWidget {
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                   hintText: 'Enter Quantity',
+                  hintStyle: TextStyle(color: Colors.grey,fontFamily: 'SanFrancisco',),
                 ),
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.done),
-              onPressed: () {
-                
-              },
-            ),
+            IconButton(icon: const Icon(Icons.done), onPressed: () {}),
           ],
         ),
       ),

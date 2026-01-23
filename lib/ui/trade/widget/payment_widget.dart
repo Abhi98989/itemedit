@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:itemedit/ui/trade/widget/product_class.dart';
+import 'package:itemedit/ui/trade/model/product_class.dart';
 
 class PaymentBody extends StatefulWidget {
   final List<OrderItem> items;
@@ -47,13 +47,28 @@ class _PaymentBodyState extends State<PaymentBody> {
   final TextEditingController _tipController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _amount = TextEditingController();
   bool _isPaymentSuccess = false;
+  bool _isNoteActive = false;
+  late FocusNode _noteFocusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _noteFocusNode = FocusNode();
+    _noteFocusNode.addListener(() {
+      setState(() {
+        _isNoteActive = _noteFocusNode.hasFocus;
+      });
+    });
+  }
 
   @override
   void dispose() {
     _tipController.dispose();
     _noteController.dispose();
     _emailController.dispose();
+    _noteFocusNode.dispose();
     super.dispose();
   }
 
@@ -69,6 +84,13 @@ class _PaymentBodyState extends State<PaymentBody> {
     widget.onConfirm();
   }
 
+  void _onBackspace() {
+    setState(() {
+      _amount.text = "0";
+      widget.onAmountChanged("0");
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isPaymentSuccess) {
@@ -78,6 +100,7 @@ class _PaymentBodyState extends State<PaymentBody> {
   }
 
   Widget _buildCollectPaymentView() {
+    bool isnumshow = true;
     return Column(
       children: [
         // Header
@@ -103,6 +126,7 @@ class _PaymentBodyState extends State<PaymentBody> {
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF1E293B),
+                      fontFamily: 'SanFrancisco',
                     ),
                   ),
                 ],
@@ -133,17 +157,21 @@ class _PaymentBodyState extends State<PaymentBody> {
                     Center(
                       child: Column(
                         children: [
+                          const Text(
+                            "Total amount",
+                            style: TextStyle(
+                              fontFamily: 'SanFrancisco',
+                              fontSize: 18,
+                            ),
+                          ),
                           Text(
                             "Rs ${widget.total.toStringAsFixed(2)}",
                             style: const TextStyle(
-                              fontSize: 32,
+                              fontSize: 28,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF1E293B),
+                              fontFamily: 'SanFrancisco',
                             ),
-                          ),
-                          const Text(
-                            "Total amount",
-                            style: TextStyle(fontSize: 14),
                           ),
                         ],
                       ),
@@ -151,143 +179,188 @@ class _PaymentBodyState extends State<PaymentBody> {
                     const SizedBox(height: 20),
                     // Cash Received Input
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          "Cash Received",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Text(
-                          "Rs ${widget.enteredAmount.isEmpty ? '0' : widget.enteredAmount}",
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Divider(),
-                    Row(
+                      spacing: 12,
+                      mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
+                        SizedBox(
+                          width: 150,
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               InkWell(
                                 onTap: () {
                                   setState(() {
-                                    _showTips = !_showTips;
+                                    isnumshow = true;
                                   });
                                 },
-                                child: Row(
-                                  children: [
-                                    Text(
-                                      "ADD TIPS?",
-                                      style: TextStyle(
-                                        color: Theme.of(context).primaryColor,
-                                        fontWeight: FontWeight.bold,
-                                        decoration: TextDecoration.underline,
-                                      ),
-                                    ),
-                                    Icon(
-                                      _showTips
-                                          ? Icons.keyboard_arrow_up
-                                          : Icons.keyboard_arrow_down,
-                                      color: Theme.of(context).primaryColor,
-                                    ),
-                                  ],
-                                ),
+                                child: _paymentMethodButton("Cash"),
                               ),
-                              if (_showTips)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8.0),
-                                  child: TextField(
-                                    controller: _tipController,
-                                    keyboardType: TextInputType.number,
-                                    decoration: const InputDecoration(
-                                      hintText: "Tip Amount",
-                                      isDense: true,
-                                      border: OutlineInputBorder(),
-                                    ),
-                                  ),
-                                ),
+                              _paymentMethodButton("Credit Sale"),
+                              _paymentMethodButton("Union Pay"),
+                              _paymentMethodButton("Gift Card"),
+                              _paymentMethodButton("Reward"),
                             ],
                           ),
                         ),
+                        Column(
+                          children: [
+                            Row(
+                              children: [
+                                const Text(
+                                  "Cash Received",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    fontFamily: 'SanFrancisco',
+                                  ),
+                                ),
+                                Text(
+                                  "Rs ${widget.enteredAmount.isEmpty ? '0' : widget.enteredAmount}",
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'SanFrancisco',
+                                  ),
+                                ),
+                                InkWell(
+                                  onTap: _onBackspace,
+                                  child: Center(
+                                    child: Icon(
+                                      Icons.backspace,
+                                      size: 21,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Expanded(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey),
+                                ),
+                                child: Column(
+                                  children: [
+                                    _numpadRow(["7", "8", "9"]),
+                                    _numpadRow(["4", "5", "6"]),
+                                    _numpadRow(["1", "2", "3"]),
+                                    _numpadRowWithBackspace([".", "0", "00"]),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
-                    SizedBox(height: 1),
-                    const Text(
-                      "Checkout Type:",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF64748B),
-                      ),
-                    ),
-                    // Checkout Type
+
+                    const Divider(),
+                    // Row(
+                    //   crossAxisAlignment: CrossAxisAlignment.start,
+                    //   children: [
+                    //     Expanded(
+                    //       child: Column(
+                    //         crossAxisAlignment: CrossAxisAlignment.start,
+                    //         children: [
+                    //           InkWell(
+                    //             onTap: () {
+                    //               setState(() {
+                    //                 _showTips = !_showTips;
+                    //               });
+                    //             },
+                    //             child: Row(
+                    //               children: [
+                    //                 Text(
+                    //                   "ADD TIPS",
+                    //                   style: TextStyle(
+                    //                     color: Theme.of(context).primaryColor,
+                    //                     fontWeight: FontWeight.bold,
+                    //                     decoration: TextDecoration.underline,
+                    //                     fontFamily: 'SanFrancisco',
+                    //                   ),
+                    //                 ),
+                    //                 // Icon(
+                    //                 //   _showTips
+                    //                 //       ? Icons.keyboard_arrow_up
+                    //                 //       : Icons.keyboard_arrow_down,
+                    //                 //   color: Theme.of(context).primaryColor,
+                    //                 // ),
+                    //               ],
+                    //             ),
+                    //           ),
+                    //           if (_showTips)
+                    //             Padding(
+                    //               padding: const EdgeInsets.only(top: 8.0),
+                    //               child: TextField(
+                    //                 controller: _tipController,
+                    //                 keyboardType: TextInputType.number,
+                    //                 decoration: const InputDecoration(
+                    //                   hintText: "Tip Amount",
+                    //                   hintStyle: TextStyle(
+                    //                     color: Colors.grey,
+                    //                     fontFamily: 'SanFrancisco',
+                    //                   ),
+                    //                   // label: Text("Tip Amount"),
+                    //                   // labelStyle: TextStyle(
+                    //                   //   color: Colors.grey,
+                    //                   //   fontFamily: 'SanFrancisco',
+                    //                   // ),
+                    //                   isDense: true,
+                    //                   // border: OutlineInputBorder(),
+                    //                 ),
+                    //               ),
+                    //             ),
+                    //         ],
+                    //       ),
+                    //     ),
+                    //   ],
+                    // ),
                     Row(
                       children: [
+                        const Text(
+                          "Purchase Type",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF64748B),
+                            fontFamily: 'SanFrancisco',
+                          ),
+                        ),
                         _checkoutTypeRadio("Serve Now"),
                         _checkoutTypeRadio("Pickup Later"),
                         _checkoutTypeRadio("Delivery"),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    // Main Content: Methods & Numpad
-                    Expanded(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Payment Methods (Left Column)
-                          SizedBox(
-                            width: 140,
-                            child: Column(
-                              children: [
-                                _paymentMethodButton("Cash"),
-                                _paymentMethodButton("Credit Sale"),
-                                _paymentMethodButton("Union Pay"),
-                                _paymentMethodButton("Gift Card"),
-                                _paymentMethodButton("Reward"),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          // Numpad (Right Column)
-                          Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey),
-                              ),
-                              child: Column(
-                                children: [
-                                  _numpadRow(["7", "8", "9"]),
-                                  _numpadRow(["4", "5", "6"]),
-                                  _numpadRow(["1", "2", "3"]),
-                                  _numpadRow([".", "0", "00"]),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                     const SizedBox(height: 8),
-
                     // Tips & Notes
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
+
                       children: [
-                        const SizedBox(width: 16),
                         Expanded(
                           child: TextField(
                             controller: _noteController,
+                            focusNode: _noteFocusNode,
+                            onTap: () {
+                              setState(() {
+                                _isNoteActive = true;
+                              });
+                            },
                             decoration: InputDecoration(
-                              hintText: "NOTES",
-                              suffixIcon: const Icon(Icons.check),
+                              hintText: "Note",
+                              hintStyle: const TextStyle(
+                                color: Colors.grey,
+                                fontFamily: 'SanFrancisco',
+                                fontSize: 14,
+                              ),
+                              label: const Text("Note(Optional)"),
+                              labelStyle: const TextStyle(
+                                color: Color(0xFF64748B),
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'SanFrancisco',
+                                fontSize: 14,
+                              ),
+
+                              isDense: true,
                               border: const UnderlineInputBorder(),
                             ),
                           ),
@@ -316,6 +389,7 @@ class _PaymentBodyState extends State<PaymentBody> {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  fontFamily: 'SanFrancisco',
                 ),
               ),
               ElevatedButton(
@@ -334,7 +408,11 @@ class _PaymentBodyState extends State<PaymentBody> {
                 ),
                 child: const Text(
                   "Checkout",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontFamily: 'SanFrancisco',
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -376,6 +454,7 @@ class _PaymentBodyState extends State<PaymentBody> {
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF1E293B),
+                fontFamily: 'SanFrancisco',
               ),
             ),
             const SizedBox(height: 24),
@@ -390,6 +469,7 @@ class _PaymentBodyState extends State<PaymentBody> {
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF64748B),
+                  fontFamily: 'SanFrancisco',
                 ),
               ),
             ),
@@ -397,7 +477,11 @@ class _PaymentBodyState extends State<PaymentBody> {
               alignment: Alignment.centerLeft,
               child: Text(
                 "${widget.customerName}, ${widget.customerPhone}\n${widget.customerAddress}${widget.customerPan.isNotEmpty ? ', PAN: ${widget.customerPan}' : ''}",
-                style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B)),
+                style: const TextStyle(
+                  fontFamily: 'SanFrancisco',
+                  fontSize: 13,
+                  color: Color(0xFF1E293B),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -410,6 +494,7 @@ class _PaymentBodyState extends State<PaymentBody> {
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF64748B),
+                  fontFamily: 'SanFrancisco',
                 ),
               ),
             ),
@@ -424,13 +509,17 @@ class _PaymentBodyState extends State<PaymentBody> {
                   children: [
                     const Text(
                       "Total paid",
-                      style: TextStyle(color: Color(0xFF64748B)),
+                      style: TextStyle(
+                        color: Color(0xFF64748B),
+                        fontFamily: 'SanFrancisco',
+                      ),
                     ),
                     Text(
                       "Rs ${widget.total.toStringAsFixed(2)}",
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        fontFamily: 'SanFrancisco',
                       ),
                     ),
                   ],
@@ -440,13 +529,17 @@ class _PaymentBodyState extends State<PaymentBody> {
                   children: [
                     const Text(
                       "Change",
-                      style: TextStyle(color: Color(0xFF64748B)),
+                      style: TextStyle(
+                        fontFamily: 'SanFrancisco',
+                        color: Color(0xFF64748B),
+                      ),
                     ),
                     Text(
                       "Rs ${_calculateChange()}",
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        fontFamily: 'SanFrancisco',
                       ),
                     ),
                   ],
@@ -462,6 +555,7 @@ class _PaymentBodyState extends State<PaymentBody> {
                     controller: _emailController,
                     decoration: const InputDecoration(
                       hintText: "enter email",
+                      hintStyle: TextStyle(fontFamily: 'SanFrancisco'),
                       prefixIcon: Icon(Icons.email_outlined, size: 18),
                       isDense: true,
                       border: OutlineInputBorder(),
@@ -494,7 +588,10 @@ class _PaymentBodyState extends State<PaymentBody> {
                   child: OutlinedButton.icon(
                     onPressed: () {},
                     icon: const Icon(Icons.share, size: 16),
-                    label: const Text("Share"),
+                    label: const Text(
+                      "Share",
+                      style: TextStyle(fontFamily: 'SanFrancisco'),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -502,7 +599,10 @@ class _PaymentBodyState extends State<PaymentBody> {
                   child: OutlinedButton.icon(
                     onPressed: () {},
                     icon: const Icon(Icons.download, size: 16),
-                    label: const Text("Download"),
+                    label: const Text(
+                      "Download",
+                      style: TextStyle(fontFamily: 'SanFrancisco'),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -510,7 +610,10 @@ class _PaymentBodyState extends State<PaymentBody> {
                   child: OutlinedButton.icon(
                     onPressed: () {},
                     icon: const Icon(Icons.print, size: 16),
-                    label: const Text("Print Bill"),
+                    label: const Text(
+                      "Print Bill",
+                      style: TextStyle(fontFamily: 'SanFrancisco'),
+                    ),
                   ),
                 ),
               ],
@@ -533,7 +636,11 @@ class _PaymentBodyState extends State<PaymentBody> {
                 ),
                 child: const Text(
                   "New Sale",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'SanFrancisco',
+                  ),
                 ),
               ),
             ),
@@ -553,6 +660,7 @@ class _PaymentBodyState extends State<PaymentBody> {
           style: const TextStyle(
             fontWeight: FontWeight.w600,
             color: Color(0xFF1E293B),
+            fontFamily: 'SanFrancisco',
           ),
         ),
       ],
@@ -571,7 +679,13 @@ class _PaymentBodyState extends State<PaymentBody> {
             });
           },
         ),
-        Text(label),
+        Text(
+          label,
+          style: const TextStyle(
+            fontFamily: 'SanFrancisco',
+            color: Color(0xFF64748B),
+          ),
+        ),
         const SizedBox(width: 8),
       ],
     );
@@ -606,6 +720,7 @@ class _PaymentBodyState extends State<PaymentBody> {
               color: isSelected
                   ? Theme.of(context).primaryColor
                   : const Color(0xFF64748B),
+              fontFamily: 'SanFrancisco',
             ),
           ),
         ),
@@ -614,22 +729,26 @@ class _PaymentBodyState extends State<PaymentBody> {
   }
 
   Widget _numpadRow(List<String> keys) {
+    bool _isCashPaymentSelected = widget.selectedPayment == "Cash";
+    bool _shouldEnableNumpad = _isCashPaymentSelected;
     return Expanded(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: keys.map((key) {
           return Expanded(
             child: InkWell(
-              onTap: () {
-                if (key == "00") {
-                  widget.onAmountChanged("${widget.enteredAmount}00");
-                } else {
-                  if (key == "." && widget.enteredAmount.contains(".")) {
-                    return;
-                  }
-                  widget.onAmountChanged(widget.enteredAmount + key);
-                }
-              },
+              onTap: _shouldEnableNumpad
+                  ? () {
+                      if (key == "00") {
+                        widget.onAmountChanged("${widget.enteredAmount}00");
+                      } else {
+                        if (key == "." && widget.enteredAmount.contains(".")) {
+                          return;
+                        }
+                        widget.onAmountChanged(widget.enteredAmount + key);
+                      }
+                    }
+                  : null,
               child: Container(
                 width: 100,
                 decoration: BoxDecoration(
@@ -639,9 +758,11 @@ class _PaymentBodyState extends State<PaymentBody> {
                 child: Center(
                   child: Text(
                     key,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w500,
+                      fontFamily: 'SanFrancisco',
+                      color: _shouldEnableNumpad ? Colors.black : Colors.grey,
                     ),
                   ),
                 ),
@@ -649,6 +770,55 @@ class _PaymentBodyState extends State<PaymentBody> {
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+
+  Widget _numpadRowWithBackspace(List<String> keys) {
+    bool _isCashPaymentSelected = widget.selectedPayment == "Cash";
+    bool _shouldEnableNumpad = _isCashPaymentSelected;
+    return Expanded(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ...keys.map((key) {
+            return Expanded(
+              child: InkWell(
+                onTap: _shouldEnableNumpad
+                    ? () {
+                        if (key == "00") {
+                          widget.onAmountChanged("${widget.enteredAmount}00");
+                        } else {
+                          if (key == "." &&
+                              widget.enteredAmount.contains(".")) {
+                            return;
+                          }
+                          widget.onAmountChanged(widget.enteredAmount + key);
+                        }
+                      }
+                    : null,
+                child: Container(
+                  width: 100,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    // borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: Text(
+                      key,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'SanFrancisco',
+                        color: _shouldEnableNumpad ? Colors.black : Colors.grey,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }

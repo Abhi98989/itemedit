@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'product_class.dart';
+import '../model/product_class.dart';
 import 'weight_item_dialog.dart';
 
 class ProductCard extends StatefulWidget {
@@ -48,25 +48,25 @@ class _ProductCardState extends State<ProductCard> {
         child: InkWell(
           onTap: _handleTap,
           child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              // border: Border.all(
-              //   color: isHovered
-              //       ? const Color(0xFF10B981)
-              //       : const Color(0xFFE2E8F0),
-              //   width: isHovered ? 2 : 1,
-              // ),
-              // boxShadow: isHovered
-              //     ? [
-              //         BoxShadow(
-              //           color: const Color(0xFF10B981).withValues(alpha: 0.1),
-              //           blurRadius: 12,
-              //           offset: const Offset(0, 4),
-              //         ),
-              //       ]
-              //     : [],
-            ),
+            // decoration: BoxDecoration(
+            //   color: Colors.white,
+            //   borderRadius: BorderRadius.circular(2),
+            // border: Border.all(
+            //   color: isHovered
+            //       ? const Color(0xff7CD23D)
+            //       : const Color(0xFFE2E8F0),
+            //   width: isHovered ? 2 : 1,
+            // ),
+            // boxShadow: isHovered
+            //     ? [
+            //         BoxShadow(
+            //           color: const Color(0xff7CD23D).withValues(alpha: 0.1),
+            //           blurRadius: 12,
+            //           offset: const Offset(0, 4),
+            //         ),
+            //       ]
+            //     : [],
+            // ),
             child: widget.isGridView
                 ? _buildGridContent()
                 : _buildListContent(),
@@ -81,11 +81,10 @@ class _ProductCardState extends State<ProductCard> {
       return Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(3),
           border: Border(
-            bottom: BorderSide(color: const Color(0xFF10B981), width: 2),
+            bottom: BorderSide(color: const Color(0xff7CD23D), width: 2),
           ),
-
           // boxShadow: const [
           //   BoxShadow(
           //     color: Color(0xFFE2E8F0),
@@ -100,9 +99,10 @@ class _ProductCardState extends State<ProductCard> {
             Text(
               widget.product.name,
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF1E293B),
+                fontFamily: 'SanFrancisco',
               ),
               textAlign: TextAlign.center,
               maxLines: 2,
@@ -112,9 +112,10 @@ class _ProductCardState extends State<ProductCard> {
             Text(
               "Rs ${widget.product.price}",
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF10B981),
+                color: Color(0xff7CD23D),
+                fontFamily: 'SanFrancisco',
               ),
             ),
           ],
@@ -124,20 +125,20 @@ class _ProductCardState extends State<ProductCard> {
     return Stack(
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(3),
           child: _buildImage(height: 200, width: double.infinity),
         ),
         Positioned(
           left: 0,
           right: 0,
-          bottom: 1,
+          bottom: 0,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.8),
               borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(8),
-                bottomRight: Radius.circular(8),
+                bottomLeft: Radius.circular(3),
+                bottomRight: Radius.circular(3),
               ),
             ),
             child: Column(
@@ -147,9 +148,10 @@ class _ProductCardState extends State<ProductCard> {
                 Text(
                   widget.product.name,
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
+                    fontFamily: 'SanFrancisco',
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -158,9 +160,10 @@ class _ProductCardState extends State<ProductCard> {
                 Text(
                   "Rs ${widget.product.price}",
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
+                    fontFamily: 'SanFrancisco',
                   ),
                 ),
               ],
@@ -190,6 +193,7 @@ class _ProductCardState extends State<ProductCard> {
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF1E293B),
+                  fontFamily: 'SanFrancisco',
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -197,7 +201,11 @@ class _ProductCardState extends State<ProductCard> {
               const SizedBox(height: 4),
               Text(
                 widget.product.category,
-                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontFamily: 'SanFrancisco',
+                  color: Colors.grey[500],
+                ),
               ),
             ],
           ),
@@ -207,7 +215,8 @@ class _ProductCardState extends State<ProductCard> {
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF10B981),
+            color: Color(0xff7CD23D),
+            fontFamily: 'SanFrancisco',
           ),
         ),
         const SizedBox(width: 8),

@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:itemedit/ui/trade/widget/productcard.dart' show ProductCard;
-import 'product_class.dart';
+import '../model/product_class.dart';
 
 class MainProductArea extends StatefulWidget {
   final Function(Product, {int quantity}) onProductTap;
@@ -12,6 +12,7 @@ class MainProductArea extends StatefulWidget {
   final VoidCallback onFavoritesClick;
   final VoidCallback onScanClick;
   final VoidCallback onMoreClick;
+  final VoidCallback onDeleteClick;
   final double price;
 
   const MainProductArea({
@@ -24,6 +25,7 @@ class MainProductArea extends StatefulWidget {
     required this.onFavoritesClick,
     required this.onScanClick,
     required this.onMoreClick,
+    required this.onDeleteClick,
     required this.price, // Pass the price here,
   });
 
@@ -139,6 +141,7 @@ class _MainProductAreaState extends State<MainProductArea> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
+                        fontFamily: 'SanFrancisco',
                       ),
                     ),
                     IconButton(
@@ -177,6 +180,7 @@ class _MainProductAreaState extends State<MainProductArea> {
                           },
                           decoration: const InputDecoration(
                             hintText: "Search category...",
+                            hintStyle: TextStyle(fontFamily: 'SanFrancisco'),
                             prefixIcon: Icon(Icons.search),
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.symmetric(
@@ -194,7 +198,10 @@ class _MainProductAreaState extends State<MainProductArea> {
                             ? const Center(
                                 child: Text(
                                   "No categories found",
-                                  style: TextStyle(color: Color(0xFF94A3B8)),
+                                  style: TextStyle(
+                                    fontFamily: 'SanFrancisco',
+                                    color: Color(0xFF94A3B8),
+                                  ),
                                 ),
                               )
                             : ListView.separated(
@@ -206,7 +213,10 @@ class _MainProductAreaState extends State<MainProductArea> {
                                   return ListTile(
                                     title: Text(
                                       category,
-                                      style: const TextStyle(fontSize: 15),
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontFamily: 'SanFrancisco',
+                                      ),
                                     ),
                                     onTap: () {
                                       setState(() {
@@ -225,6 +235,101 @@ class _MainProductAreaState extends State<MainProductArea> {
                 ),
               );
             },
+          ),
+        );
+      },
+    );
+  }
+
+  void _showClearAllDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: Container(
+              width: 360,
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  /// ICON
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.delete_outline,
+                      size: 32,
+                      color: Colors.red.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  /// TITLE
+                  const Text(
+                    "Clear All Items?",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "This will remove all items from the cart. "
+                    "This action cannot be undone.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+                  ),
+                  const SizedBox(height: 24),
+
+                  /// ACTION BUTTONS
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text("Cancel"),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            widget.onDeleteClick();
+                            Navigator.pop(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            "Clear All",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },
@@ -281,7 +386,9 @@ class _MainProductAreaState extends State<MainProductArea> {
                           hintText: isKeyboardBlocked
                               ? "Keyboard Blocked..."
                               : "Search products...",
-                          hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                          hintStyle: const TextStyle(
+                            fontFamily: 'SanFrancisco',
+                          ),
                           prefixIcon: const Icon(
                             Icons.search,
                             color: Color(0xFF64748B),
@@ -397,6 +504,7 @@ class _MainProductAreaState extends State<MainProductArea> {
                                     ? FontWeight.w600
                                     : FontWeight.normal,
                                 color: isSelected ? Colors.black : Colors.black,
+                                fontFamily: 'SanFrancisco',
                               ),
                             ),
                           ),
@@ -424,6 +532,7 @@ class _MainProductAreaState extends State<MainProductArea> {
                               style: TextStyle(
                                 color: Colors.grey[400],
                                 fontSize: 16,
+                                fontFamily: 'SanFrancisco',
                               ),
                             ),
                           ],
@@ -501,38 +610,43 @@ class _MainProductAreaState extends State<MainProductArea> {
               const Spacer(),
               Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                  color: const Color(0xff7CD23D).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Color(0xFF10B981).withValues(alpha: 0.2),
+                    color: Color(0xff7CD23D).withValues(alpha: 0.2),
                     width: 1,
                   ),
                 ),
                 child: IconButton(
-                  onPressed: () {},
-                  icon: Icon(Icons.delete, size: 25),
+                  onPressed: () {
+                    _showClearAllDialog(context);
+                  },
+                  icon: Icon(Icons.delete, size: 25, color: Colors.red),
                 ),
               ),
-
               const SizedBox(width: 8),
               Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                  color: const Color(0xff7CD23D).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Color(0xFF10B981).withValues(alpha: 0.2),
+                    color: Color(0xff7CD23D).withValues(alpha: 0.2),
                     width: 1,
                   ),
                 ),
                 child: IconButton(
-                  onPressed: () {},
-                  icon: Icon(Icons.back_hand_outlined, size: 25),
+                  onPressed: widget.onSaveDraft,
+                  icon: Icon(
+                    Icons.back_hand_outlined,
+                    size: 25,
+                    // color: Colors.yellow,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
               _actionButton(
                 "Pay: ${widget.price}",
-                const Color(0xFF10B981),
+                const Color(0xff7CD23D),
                 Colors.white,
                 widget.onPaymentClick,
               ),
@@ -568,7 +682,11 @@ class _MainProductAreaState extends State<MainProductArea> {
             const SizedBox(width: 6),
             Text(
               label,
-              style: const TextStyle(fontSize: 14, color: Color(0xFF475569)),
+              style: const TextStyle(
+                fontFamily: 'SanFrancisco',
+                fontSize: 14,
+                color: Color(0xFF475569),
+              ),
             ),
           ],
         ),
@@ -589,7 +707,7 @@ class _MainProductAreaState extends State<MainProductArea> {
         child: Icon(
           icon,
           size: 25,
-          color: isActive ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
+          color: isActive ? const Color(0xff7CD23D) : const Color(0xFF94A3B8),
         ),
       ),
     );
@@ -612,7 +730,11 @@ class _MainProductAreaState extends State<MainProductArea> {
       onPressed: onPressed,
       child: Text(
         text,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        style: const TextStyle(
+          fontFamily: 'SanFrancisco',
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

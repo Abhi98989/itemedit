@@ -236,7 +236,6 @@ class OrderItem {
   String? note;
   double? discount;
   bool isFree;
-
   OrderItem({
     required this.name,
     required this.quantity,
@@ -246,6 +245,25 @@ class OrderItem {
     this.discount = 0.0,
     this.isFree = false,
   });
+  factory OrderItem.fromJson(Map<String, dynamic> json) => OrderItem(
+    name: json["name"],
+    quantity: json["quantity"],
+    price: json["price"],
+    category: json["category"],
+    note: json["note"],
+    discount: json["discount"],
+    isFree: json["isFree"],
+  );
+
+  Map<String, dynamic> toJson() => {
+    "name": name,
+    "quantity": quantity,
+    "price": price,
+    "category": category,
+    "note": note,
+    "discount": discount,
+    "isFree": isFree,
+  };
 }
 
 final List<OrderItem> orderItems = <OrderItem>[
@@ -266,8 +284,6 @@ class Customer {
   String phone;
   String address;
   String outstandingbalance;
-
-
   Customer({
     required this.name,
     required this.phone,

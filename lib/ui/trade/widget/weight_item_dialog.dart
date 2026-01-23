@@ -1,5 +1,7 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
-import 'product_class.dart';
+import '../model/product_class.dart';
 
 class WeightItemDialog extends StatefulWidget {
   final Product product;
@@ -14,8 +16,8 @@ class WeightItemDialog extends StatefulWidget {
 }
 
 class _WeightItemDialogState extends State<WeightItemDialog> {
-  String _quantity = "1";
-
+  String _quantity = "";
+  TextEditingController textEditingController = TextEditingController();
   void _onKeyTap(String value) {
     setState(() {
       if (_quantity == "0") {
@@ -28,19 +30,15 @@ class _WeightItemDialogState extends State<WeightItemDialog> {
 
   void _onBackspace() {
     setState(() {
-      if (_quantity.isNotEmpty) {
-        _quantity = _quantity.substring(0, _quantity.length - 1);
-        if (_quantity.isEmpty) {
-          _quantity = "0";
-        }
-      }
+      _quantity = "0";
     });
   }
 
   void _onConfirm() {
-    final qty = int.tryParse(_quantity) ?? 0;
+    final qty = double.tryParse(_quantity) ?? 0;
+
     if (qty > 0) {
-      widget.onConfirm(qty);
+      widget.onConfirm(double.parse(_quantity).toInt());
       Navigator.pop(context);
     }
   }
@@ -49,77 +47,106 @@ class _WeightItemDialogState extends State<WeightItemDialog> {
   Widget build(BuildContext context) {
     final qty = double.tryParse(_quantity) ?? 0;
     final amount = widget.product.price * qty;
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        width: 350,
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              spacing: 6,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                CloseButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ButtonStyle(iconSize: WidgetStatePropertyAll(20)),
-                ),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.product.name,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      "Rs ${widget.product.price} / kg",
-                      style: const TextStyle(fontSize: 16, color: Colors.black),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-            const Text("Quantity", style: TextStyle(fontSize: 16)),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+      child: Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
+        child: Container(
+          width: 350,
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                spacing: 6,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Text(
-                    _quantity,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  CloseButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ButtonStyle(iconSize: WidgetStatePropertyAll(20)),
                   ),
-                  InkWell(
-                    onTap: _onBackspace,
-                    child: const Icon(Icons.backspace_outlined),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "${widget.product.name} - Rs ${widget.product.price}/kg",
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'SanFrancisco',
+                        ),
+                      ),
+                      // Text(
+                      //   "Rs ${widget.product.price} / kg",
+                      //   style: const TextStyle(
+                      //     fontSize: 16,
+                      //     color: Colors.black,
+                      //     fontFamily: 'SanFrancisco',
+                      //   ),
+                      // ),
+                    ],
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              "Amount: ${amount.toStringAsFixed(0)}",
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 20),
-            _buildKeypad(),
-          ],
+
+              const SizedBox(height: 20),
+              const Text(
+                "Quantity",
+                style: TextStyle(fontSize: 16, fontFamily: 'SanFrancisco'),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 16,
+                ),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // TextField(
+                    //   controller: textEditingController,
+                    //   onChanged: (value) => _onKeyTap(value),
+                    //   enabled: false,
+                    //   style: const TextStyle(
+                    //     fontSize: 24,
+                    //     fontWeight: FontWeight.bold,
+                    //     fontFamily: 'SanFrancisco',
+                    //   ),
+                    // ),
+                    Text(
+                      _quantity,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'SanFrancisco',
+                      ),
+                    ),
+                    InkWell(
+                      onTap: _onBackspace,
+                      child: const Icon(Icons.backspace_outlined),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "Amount Rs ${amount.toStringAsFixed(0)}",
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'SanFrancisco',
+                ),
+              ),
+              const SizedBox(height: 20),
+              _buildKeypad(),
+            ],
+          ),
         ),
       ),
     );
@@ -170,6 +197,7 @@ class _WeightItemDialogState extends State<WeightItemDialog> {
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
+                      fontFamily: 'SanFrancisco',
                     ),
                   ),
                 ),
@@ -195,7 +223,11 @@ class _WeightItemDialogState extends State<WeightItemDialog> {
           alignment: Alignment.center,
           child: Text(
             label,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'SanFrancisco',
+            ),
           ),
         ),
       ),
