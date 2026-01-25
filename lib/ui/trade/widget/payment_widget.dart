@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:itemedit/ui/trade/model/product_class.dart';
 import 'dart:async';
 
+// ignore: must_be_immutable
 class PaymentBody extends StatefulWidget {
   final List<OrderItem> items;
   final double subtotal;
@@ -13,6 +14,7 @@ class PaymentBody extends StatefulWidget {
   final ValueChanged<String> onAmountChanged;
   final VoidCallback onBack;
   final VoidCallback onConfirm;
+  final VoidCallback onSelectCustomer;
   final String invoiceNumber;
   String customerName;
   String customerPhone;
@@ -31,6 +33,7 @@ class PaymentBody extends StatefulWidget {
     required this.onAmountChanged,
     required this.onBack,
     required this.onConfirm,
+    required this.onSelectCustomer,
     this.invoiceNumber = "1500",
     this.customerName = "Guest",
     this.customerPhone = "",
@@ -44,35 +47,46 @@ class PaymentBody extends StatefulWidget {
 
 class _PaymentBodyState extends State<PaymentBody> {
   String _checkoutType = "Serve Now";
-  bool _isDeliveryMode = false;
-  bool _showTips = false;
+
   final TextEditingController _tipController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
+  final TextEditingController _refController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _amount = TextEditingController();
-  final TextEditingController _amountController = TextEditingController();
-  final FocusNode _amountFocusNode = FocusNode();
   final TextEditingController _delayTimeController = TextEditingController();
   bool _isPaymentSuccess = false;
-  bool _isNoteActive = false;
   late FocusNode _noteFocusNode;
   late FocusNode _amountFocusNode2;
-  TimeOfDay? _selectedTime;
+  late FocusNode _refFocusNode;
+  DateTime? _pickupDateTime;
+  late TextEditingController _deliveryPhoneController;
+  late TextEditingController _deliveryAddressController;
   int _remainingSeconds = 0;
   Timer? _timer;
 
-  bool _isEditingCustomer = false;
   @override
   void initState() {
     super.initState();
     _noteFocusNode = FocusNode();
-    _noteFocusNode.requestFocus();
     _amountFocusNode2 = FocusNode();
-    _noteFocusNode.addListener(() {
-      setState(() {
-        _isNoteActive = _noteFocusNode.hasFocus;
-      });
-    });
+    _refFocusNode = FocusNode();
+    _deliveryPhoneController = TextEditingController(
+      text: widget.customerPhone,
+    );
+    _deliveryAddressController = TextEditingController(
+      text: widget.customerAddress,
+    );
+  }
+
+  @override
+  void didUpdateWidget(PaymentBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.customerPhone != oldWidget.customerPhone) {
+      _deliveryPhoneController.text = widget.customerPhone;
+    }
+    if (widget.customerAddress != oldWidget.customerAddress) {
+      _deliveryAddressController.text = widget.customerAddress;
+    }
   }
 
   @override
@@ -80,6 +94,9 @@ class _PaymentBodyState extends State<PaymentBody> {
     _tipController.dispose();
     _noteController.dispose();
     _emailController.dispose();
+    _refFocusNode.dispose();
+    _deliveryPhoneController.dispose();
+    _deliveryAddressController.dispose();
     _amount.dispose();
     _delayTimeController.dispose();
     _noteFocusNode.dispose();
@@ -106,22 +123,20 @@ class _PaymentBodyState extends State<PaymentBody> {
   }
 
   Widget _buildCreditSaleFrame() {
-    bool showAddress = false;
-
     final bool customerSelected =
         widget.customerName.isNotEmpty && widget.customerPhone.isNotEmpty;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        // borderRadius: BorderRadius.circular(12),
+        // border: Border.all(color: Colors.grey.shade200),/
+        // boxShadow: [
+        //   BoxShadow(
+        //     color: Colors.black.withValues(alpha: 0.04),
+        //     blurRadius: 8,
+        //     offset: const Offset(0, 2),
+        //   ),
+        // ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
@@ -152,217 +167,102 @@ class _PaymentBodyState extends State<PaymentBody> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    // Flexible(
-                    //   child: IntrinsicWidth(
-                    //     child: Container(
-                    //       constraints:
-                    //           const BoxConstraints(
-                    //             minWidth: 100,
-                    //             maxWidth: 200,
-                    //           ),
-                    //       child: TextField(
-                    //         controller:
-                    //             _amountController,
-                    //         focusNode:
-                    //             _amountFocusNode,
-                    //         keyboardType:
-                    //             const TextInputType.numberWithOptions(
-                    //               decimal: true,
-                    //             ),
-                    //         textAlign:
-                    //             TextAlign.right,
-                    //         style: const TextStyle(
-                    //           fontSize: 24,
-                    //           fontWeight:
-                    //               FontWeight.bold,
-                    //           fontFamily:
-                    //               'SanFrancisco',
-                    //         ),
-                    //         decoration: InputDecoration(
-                    //           hintText: "0",
-                    //           hintStyle: TextStyle(
-                    //             color: Colors
-                    //                 .grey
-                    //                 .shade400,
-                    //             fontSize: 24,
-                    //             fontWeight:
-                    //                 FontWeight.bold,
-                    //             fontFamily:
-                    //                 'SanFrancisco',
-                    //           ),
-                    //           prefix: const Padding(
-                    //             padding:
-                    //                 EdgeInsets.only(
-                    //                   right: 4,
-                    //                 ),
-                    //             child: Text(
-                    //               "Rs ",
-                    //               style: TextStyle(
-                    //                 fontSize: 24,
-                    //                 fontWeight:
-                    //                     FontWeight
-                    //                         .bold,
-                    //                 fontFamily:
-                    //                     'SanFrancisco',
-                    //               ),
-                    //             ),
-                    //           ),
-
-                    //           contentPadding:
-                    //               const EdgeInsets.symmetric(
-                    //                 horizontal: 12,
-                    //                 vertical: 8,
-                    //               ),
-                    //           isDense: true,
-                    //         ),
-                    //         onChanged: (value) {
-                    //           // Validate input - only allow numbers and one decimal point
-                    //           if (value
-                    //               .isNotEmpty) {
-                    //             final isValid =
-                    //                 RegExp(
-                    //                   r'^\d*\.?\d*$',
-                    //                 ).hasMatch(
-                    //                   value,
-                    //                 );
-                    //             if (!isValid) {
-                    //               _amountController
-                    //                   .text = value
-                    //                   .substring(
-                    //                     0,
-                    //                     value.length -
-                    //                         1,
-                    //                   );
-                    //               _amountController
-                    //                       .selection =
-                    //                   TextSelection.fromPosition(
-                    //                     TextPosition(
-                    //                       offset: _amountController
-                    //                           .text
-                    //                           .length,
-                    //                     ),
-                    //                   );
-                    //             }
-                    //           }
-                    //         },
-                    //       ),
-                    //     ),
-                    //   ),
-                    // ),
                   ],
                 ),
               ],
             ),
           ),
+          SizedBox(width: double.infinity, child: Divider()),
           // Customer Details Section
-          Container(
-            decoration: BoxDecoration(
-              color: customerSelected ? const Color(0xFFF8FAFC) : Colors.white,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              ),
-            ),
-            child: Theme(
-              data: Theme.of(
-                context,
-              ).copyWith(dividerColor: Colors.transparent),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: customerSelected
-                      ? const Color(0xFFF8FAFC)
-                      : Colors.white,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(12),
-                    topRight: Radius.circular(12),
-                  ),
+          GestureDetector(
+            onTap: () {
+              if (!customerSelected) {
+                widget.onSelectCustomer();
+              }
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                color: customerSelected
+                    ? const Color(0xFFF8FAFC)
+                    : Colors.white,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
                 ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundColor: Theme.of(
-                        context,
-                      ).primaryColor.withValues(alpha: 0.1),
-                      child: Icon(
-                        Icons.person,
-                        size: 18,
-                        color: Theme.of(context).primaryColor,
-                      ),
+              ),
+              child: Theme(
+                data: Theme.of(
+                  context,
+                ).copyWith(dividerColor: Colors.transparent),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: customerSelected
+                        ? const Color(0xFFF8FAFC)
+                        : Colors.white,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
                     ),
-                    const SizedBox(width: 12),
-
-                    /// Text content
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.customerName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 15,
-                              fontFamily: 'SanFrancisco',
-                            ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (!customerSelected)
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).primaryColor.withValues(alpha: 0.1),
+                          child: Icon(
+                            Icons.person,
+                            size: 18,
+                            color: Theme.of(context).primaryColor,
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            widget.customerPhone,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade600,
-                              fontFamily: 'SanFrancisco',
-                            ),
-                          ),
+                        ),
+                      const SizedBox(width: 12),
 
-                          /// Address (toggle)
-                          AnimatedCrossFade(
-                            firstChild: const SizedBox.shrink(),
-                            secondChild: Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.location_on_outlined,
-                                    size: 14,
-                                    color: Colors.grey.shade500,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      widget.customerAddress,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey.shade600,
-                                        fontFamily: 'SanFrancisco',
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                      /// Text content
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.customerName.isEmpty
+                                  ? "Select Customer"
+                                  : widget.customerName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                                fontFamily: 'SanFrancisco',
                               ),
                             ),
-                            crossFadeState: CrossFadeState.showFirst,
-                            duration: const Duration(milliseconds: 200),
-                          ),
-                        ],
-                      ),
-                    ),
 
-                    /// Toggle icon
-                    InkWell(
-                      onTap: () {
-                        setState(() {
-                          showAddress = !showAddress;
-                        });
-                      },
-                      child: Icon(
-                        Icons.keyboard_arrow_down,
-                        color: Colors.grey.shade500,
+                            const SizedBox(height: 2),
+                            if (customerSelected) ...[
+                              Text(
+                                widget.customerPhone,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey.shade600,
+                                  fontFamily: 'SanFrancisco',
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                widget.customerAddress,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey.shade600,
+                                  fontFamily: 'SanFrancisco',
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -374,11 +274,15 @@ class _PaymentBodyState extends State<PaymentBody> {
             child: Column(
               children: [
                 const SizedBox(height: 12),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: _buildCompactFormField(
-                    label: "Reference #",
-                    hint: "Add reference number",
+                SizedBox(
+                  width: 500,
+                  child: TextField(
+                    controller: _refController,
+                    focusNode: _refFocusNode,
+                    decoration: const InputDecoration(
+                      labelText: "reference no",
+                      // border: UnderlineInputBorder(),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -388,49 +292,6 @@ class _PaymentBodyState extends State<PaymentBody> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildCompactFormField({
-    required String label,
-    required String hint,
-    String? value,
-    bool isReadOnly = false,
-    TextInputType keyboardType = TextInputType.text,
-    int maxLines = 1,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey.shade700,
-            fontFamily: 'SanFrancisco',
-          ),
-        ),
-        TextField(
-          readOnly: isReadOnly,
-          keyboardType: keyboardType,
-          maxLines: maxLines,
-          controller: value != null ? TextEditingController(text: value) : null,
-          decoration: InputDecoration(
-            // hintText: hint,
-            isDense: true,
-            hintStyle: TextStyle(
-              color: Colors.grey.shade400,
-              fontSize: 14,
-              fontFamily: 'SanFrancisco',
-            ),
-            filled: true,
-            fillColor: isReadOnly ? Colors.grey.shade50 : Colors.white,
-            contentPadding: const EdgeInsets.symmetric(vertical: 2),
-          ),
-          style: const TextStyle(fontSize: 14, fontFamily: 'SanFrancisco'),
-        ),
-      ],
     );
   }
 
@@ -473,7 +334,6 @@ class _PaymentBodyState extends State<PaymentBody> {
                   onTap: () {
                     setState(() {
                       _checkoutType = "Serve Now";
-                      _isDeliveryMode = false;
                     });
                   },
                   child: _checkoutTypeRadio("Serve Now"),
@@ -484,7 +344,6 @@ class _PaymentBodyState extends State<PaymentBody> {
                   onTap: () {
                     setState(() {
                       _checkoutType = "Pickup Later";
-                      _isDeliveryMode = false;
                     });
                   },
                   child: _checkoutTypeRadio("Pickup Later"),
@@ -495,7 +354,6 @@ class _PaymentBodyState extends State<PaymentBody> {
                   onTap: () {
                     setState(() {
                       _checkoutType = "Delivery";
-                      _isDeliveryMode = true;
                     });
                   },
                   child: _checkoutTypeRadio("Delivery"),
@@ -509,25 +367,42 @@ class _PaymentBodyState extends State<PaymentBody> {
           const SizedBox(height: 10),
           GestureDetector(
             onTap: () async {
-              final picked = await showTimePicker(
+              final date = await showDatePicker(
                 context: context,
-                initialTime: _selectedTime ?? TimeOfDay.now(),
+                initialDate: DateTime.now(),
+                firstDate: DateTime.now(),
+                lastDate: DateTime.now().add(const Duration(days: 365)),
               );
-              if (picked != null) {
-                setState(() {
-                  _selectedTime = picked;
-                  _delayTimeController.text = picked.format(context);
-                });
-                _startCountdownToTime(picked);
+              if (date != null) {
+                // ignore: use_build_context_synchronously
+                final time = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay.now(),
+                );
+                if (time != null) {
+                  final dateTime = DateTime(
+                    date.year,
+                    date.month,
+                    date.day,
+                    time.hour,
+                    time.minute,
+                  );
+                  setState(() {
+                    _pickupDateTime = dateTime;
+                    _delayTimeController.text =
+                        "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} ${time.format(context)}";
+                  });
+                  _startCountdownToTime(dateTime);
+                }
               }
             },
             child: AbsorbPointer(
               child: TextField(
                 controller: _delayTimeController,
                 decoration: InputDecoration(
-                  labelText: 'Select Pickup Time',
-                  prefixIcon: const Icon(Icons.schedule),
-                  suffixIcon: _remainingSeconds > 0 && _selectedTime != null
+                  labelText: 'Select Pickup Date & Time',
+                  prefixIcon: const Icon(Icons.calendar_today),
+                  suffixIcon: _remainingSeconds > 0 && _pickupDateTime != null
                       ? Padding(
                           padding: const EdgeInsets.only(right: 12),
                           child: Text(
@@ -547,40 +422,29 @@ class _PaymentBodyState extends State<PaymentBody> {
           ),
         ],
         // Delivery Address and Phone Fields
-        if (_isDeliveryMode) ...[
-          const SizedBox(height: 10),
-          TextField(
-            controller: TextEditingController(
-              text: widget.customerPhone.isNotEmpty ? widget.customerPhone : '',
+        if (_checkoutType == "Delivery") ...[
+          SizedBox(
+            width: 500,
+            child: TextField(
+              controller: _deliveryPhoneController,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: 'Delivery Phone',
+                hintText: '',
+                isDense: true,
+              ),
             ),
-            keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(
-              labelText: 'Delivery Phone',
-              hintText: 'Enter phone number',
-              prefixIcon: Icon(Icons.phone),
-              border: OutlineInputBorder(),
-            ),
-            onChanged: (value) {
-              // Handle phone number change
-            },
           ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: TextEditingController(
-              text: widget.customerAddress.isNotEmpty
-                  ? widget.customerAddress
-                  : '',
+          SizedBox(
+            width: 500,
+            child: TextField(
+              controller: _deliveryAddressController,
+              decoration: const InputDecoration(
+                labelText: 'Delivery Address',
+                hintText: '',
+                isDense: true,
+              ),
             ),
-            maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: 'Delivery Address',
-              hintText: 'Enter delivery address',
-              prefixIcon: Icon(Icons.location_on),
-              border: OutlineInputBorder(),
-            ),
-            onChanged: (value) {
-              // Handle address change
-            },
           ),
         ],
       ],
@@ -634,10 +498,23 @@ class _PaymentBodyState extends State<PaymentBody> {
                   ),
                 ],
               ),
-              OutlinedButton.icon(
+              TextButton(
                 onPressed: () {},
-                icon: const Icon(Icons.print, size: 18),
-                label: const Text("Print Guest Check"),
+                child: Row(
+                  children: [
+                    Icon(Icons.print, color: Colors.grey.shade600),
+                    const SizedBox(width: 4),
+                    Text(
+                      "Print Guest Check",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E293B),
+                        fontFamily: 'SanFrancisco',
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -707,7 +584,7 @@ class _PaymentBodyState extends State<PaymentBody> {
                           Expanded(
                             child: SizedBox(
                               width: 500,
-                              child: Container(
+                              child: SizedBox(
                                 height: 440,
                                 child: SingleChildScrollView(
                                   scrollDirection: Axis.vertical,
@@ -749,117 +626,16 @@ class _PaymentBodyState extends State<PaymentBody> {
                                                           disabledBorder:
                                                               InputBorder.none,
                                                         ),
+                                                    textAlign: TextAlign.right,
+                                                    style: const TextStyle(
+                                                      fontSize: 24,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontFamily:
+                                                          'SanFrancisco',
+                                                    ),
                                                   ),
                                                 ),
-
-                                                // Text(
-                                                //   widget.enteredAmount.isEmpty
-                                                //       ? '0'
-                                                //       : widget.enteredAmount,
-                                                //   style: const TextStyle(
-                                                //     fontSize: 24,
-                                                //     fontWeight: FontWeight.bold,
-                                                //     fontFamily: 'SanFrancisco',
-                                                //   ),
-                                                //   textAlign: TextAlign.center,
-                                                // ),
-                                                // Flexible(
-                                                //   child: IntrinsicWidth(
-                                                //     child: Container(
-                                                //       constraints:
-                                                //           const BoxConstraints(
-                                                //             minWidth: 100,
-                                                //             maxWidth: 200,
-                                                //           ),
-                                                //       child: TextField(
-                                                //         controller:
-                                                //             _amountController,
-                                                //         focusNode:
-                                                //             _amountFocusNode,
-                                                //         keyboardType:
-                                                //             const TextInputType.numberWithOptions(
-                                                //               decimal: true,
-                                                //             ),
-                                                //         textAlign:
-                                                //             TextAlign.right,
-                                                //         style: const TextStyle(
-                                                //           fontSize: 24,
-                                                //           fontWeight:
-                                                //               FontWeight.bold,
-                                                //           fontFamily:
-                                                //               'SanFrancisco',
-                                                //         ),
-                                                //         decoration: InputDecoration(
-                                                //           hintText: "0",
-                                                //           hintStyle: TextStyle(
-                                                //             color: Colors
-                                                //                 .grey
-                                                //                 .shade400,
-                                                //             fontSize: 24,
-                                                //             fontWeight:
-                                                //                 FontWeight.bold,
-                                                //             fontFamily:
-                                                //                 'SanFrancisco',
-                                                //           ),
-                                                //           prefix: const Padding(
-                                                //             padding:
-                                                //                 EdgeInsets.only(
-                                                //                   right: 4,
-                                                //                 ),
-                                                //             child: Text(
-                                                //               "Rs ",
-                                                //               style: TextStyle(
-                                                //                 fontSize: 24,
-                                                //                 fontWeight:
-                                                //                     FontWeight
-                                                //                         .bold,
-                                                //                 fontFamily:
-                                                //                     'SanFrancisco',
-                                                //               ),
-                                                //             ),
-                                                //           ),
-
-                                                //           contentPadding:
-                                                //               const EdgeInsets.symmetric(
-                                                //                 horizontal: 12,
-                                                //                 vertical: 8,
-                                                //               ),
-                                                //           isDense: true,
-                                                //         ),
-                                                //         onChanged: (value) {
-                                                //           // Validate input - only allow numbers and one decimal point
-                                                //           if (value
-                                                //               .isNotEmpty) {
-                                                //             final isValid =
-                                                //                 RegExp(
-                                                //                   r'^\d*\.?\d*$',
-                                                //                 ).hasMatch(
-                                                //                   value,
-                                                //                 );
-                                                //             if (!isValid) {
-                                                //               _amountController
-                                                //                   .text = value
-                                                //                   .substring(
-                                                //                     0,
-                                                //                     value.length -
-                                                //                         1,
-                                                //                   );
-                                                //               _amountController
-                                                //                       .selection =
-                                                //                   TextSelection.fromPosition(
-                                                //                     TextPosition(
-                                                //                       offset: _amountController
-                                                //                           .text
-                                                //                           .length,
-                                                //                     ),
-                                                //                   );
-                                                //             }
-                                                //           }
-                                                //         },
-                                                //       ),
-                                                //     ),
-                                                //   ),
-                                                // ),
                                                 InkWell(
                                                   onTap: _onBackspace,
                                                   child: const Icon(
@@ -873,7 +649,7 @@ class _PaymentBodyState extends State<PaymentBody> {
                                           ],
                                         ),
                                       ),
-                                      const SizedBox(height: 10),
+                                      Divider(),
                                       // Numpad
                                       Container(
                                         width: 500,
@@ -926,13 +702,13 @@ class _PaymentBodyState extends State<PaymentBody> {
           ),
           child: Center(
             child: SizedBox(
-              width: 700,
+              width: 900,
               child: Row(
                 children: [
                   Row(
                     children: [
                       Text(
-                        "Still Remaining ",
+                        _getPaymentStatusLabel(),
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -1045,7 +821,6 @@ class _PaymentBodyState extends State<PaymentBody> {
                   ),
                 ),
               const SizedBox(height: 16),
-
               // Payment Summary
               const Align(
                 alignment: Alignment.centerLeft,
@@ -1345,100 +1120,29 @@ class _PaymentBodyState extends State<PaymentBody> {
     final paid = double.tryParse(widget.enteredAmount) ?? 0;
     final change = paid - widget.total;
     if (change < 0) {
-      return "-Rs ${(-change).toStringAsFixed(2)}";
-    } else if (change > 0) {
-      return "Rs ${change.toStringAsFixed(2)}";
+      return "- Rs ${change.abs().toStringAsFixed(2)}";
+    }
+    return "Rs ${change.abs().toStringAsFixed(2)}";
+  }
+
+  String _getPaymentStatusLabel() {
+    final paid = double.tryParse(widget.enteredAmount) ?? 0;
+    final change = paid - widget.total;
+    if (change < 0) {
+      return "Still Remaining ";
     } else {
-      return "Rs ${change.toStringAsFixed(2)}";
+      return "Return Amount ";
     }
   }
 
-  void _showEditCustomerDialog() {
-    // Show a dialog to edit customer details
-    showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        final nameController = TextEditingController(text: widget.customerName);
-        final phoneController = TextEditingController(
-          text: widget.customerPhone,
-        );
-        final addressController = TextEditingController(
-          text: widget.customerAddress,
-        );
-
-        return AlertDialog(
-          title: const Text('Edit Customer Details'),
-          content: SizedBox(
-            width: 400,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Phone',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: addressController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Address',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                // Update customer details in the parent widget
-                // Since we can't directly modify widget properties,
-                // we'd need to call a callback function
-                // For now, just close the dialog
-                Navigator.of(context).pop();
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _startCountdownToTime(TimeOfDay selectedTime) {
+  void _startCountdownToTime(DateTime selectedDateTime) {
     _timer?.cancel();
 
     final nowDateTime = DateTime.now();
-    final selectedDateTime = DateTime(
-      nowDateTime.year,
-      nowDateTime.month,
-      nowDateTime.day,
-      selectedTime.hour,
-      selectedTime.minute,
-    );
-
     int seconds = selectedDateTime.difference(nowDateTime).inSeconds;
+
     if (seconds < 0) {
-      seconds += 24 * 60 * 60; // wrap around to next day
+      seconds = 0;
     }
 
     setState(() {

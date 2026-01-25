@@ -16,7 +16,6 @@ class _POSLandingPageState extends State<POSLandingPage> {
   bool isPaymentMode = false;
   String enteredAmount = "";
   String selectedPayment = "Cash";
-
   // Customer Data
   Customer? selectedCustomer;
   bool isCustomerSelected = false;
@@ -26,7 +25,6 @@ class _POSLandingPageState extends State<POSLandingPage> {
   String customerPan = "";
   String invoiceNumber = "";
   String customerBalance = "";
-
   void _showCustomerSelectionDialog() {
     final TextEditingController searchController = TextEditingController();
     showDialog(
@@ -69,23 +67,30 @@ class _POSLandingPageState extends State<POSLandingPage> {
                               fontFamily: 'SanFrancisco',
                             ),
                           ),
-                          TextButton(
-                            onPressed: () {
-                              //todo
-                            },
-                            child: Text(
-                              "Add",
-                              style: TextStyle(fontFamily: 'SanFrancisco'),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () {
-                              searchController.dispose();
-                              Navigator.pop(context);
-                            },
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
+                          Row(
+                            spacing: 16,
+                            children: [
+                              TextButton(
+                                onPressed: () {
+                                  //todo
+                                },
+                                child: Row(
+                                  children: const [
+                                    Icon(Icons.add),
+                                    Text("Add New Customer"),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: () {
+                                  searchController.dispose();
+                                  Navigator.pop(context);
+                                },
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -454,6 +459,7 @@ class _POSLandingPageState extends State<POSLandingPage> {
                     customerPhone: customerPhone,
                     customerAddress: customerAddress,
                     customerPan: customerPan,
+                    onSelectCustomer: _showCustomerSelectionDialog,
                     onPaymentModeChanged: (mode) {
                       setState(() {
                         selectedPayment = mode;
@@ -655,14 +661,12 @@ class OrderSidebar extends StatefulWidget {
 class _OrderSidebarState extends State<OrderSidebar> {
   bool showSummary = false;
   double _orderDiscount = 0.0;
-  double _deliveryCharges = 0.0;
+  final double _deliveryCharges = 0.0;
   double _packageCharges = 0.0;
   String _couponCode = "";
 
   // Store dynamic charges
-  final List<Map<String, dynamic>> _customCharges = [];
   final List<Map<String, dynamic>> _chargeTypes = [];
-
   void _showEditItemDialog(BuildContext context, int index) {
     final item = widget.items[index];
     int tempQty = item.quantity;
@@ -1033,7 +1037,14 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                     vertical: 8,
                                   ),
                                 ),
-                                child: const Text("Remove from Cart"),
+                                child: const Text(
+                                  "Remove from Cart",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    fontFamily: 'sanFrancisco',
+                                  ),
+                                ),
                               ),
                             ),
                           ],
@@ -1134,7 +1145,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
 
   void _showDiscountSheet() {
     double tempDiscount = _orderDiscount;
-    bool isPercentage = true;
+    bool isPercentage = false;
 
     final controller = TextEditingController(
       text: tempDiscount > 0 ? tempDiscount.toString() : "",
@@ -1229,9 +1240,10 @@ class _OrderSidebarState extends State<OrderSidebar> {
                               child: TextField(
                                 controller: controller,
                                 keyboardType: TextInputType.number,
-                                decoration: const InputDecoration(
+                                decoration: InputDecoration(
                                   isDense: true,
                                   border: UnderlineInputBorder(),
+                                  prefixText: isPercentage ? "%" : "Rs",
                                 ),
                                 onChanged: (v) {
                                   tempDiscount = double.tryParse(v) ?? 0;
@@ -1247,26 +1259,26 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                 });
                               },
                             ),
-                            const Text("%"),
+                            Text(isPercentage ? "%" : "Rs"),
                           ],
                         ),
 
                         const SizedBox(height: 20),
 
                         /// ADD NEW DISCOUNT
-                        Center(
-                          child: TextButton(
-                            onPressed: () {
-                              // Show dialog to add new discount type
-                              _showAddDiscountDialog(setSheetState);
-                            },
-                            child: const Text(
-                              "ADD NEW DISCOUNT",
-                              style: TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
+                        // Center(
+                        //   child: TextButton(
+                        //     onPressed: () {
+                        //       // Show dialog to add new discount type
+                        //       _showAddDiscountDialog(setSheetState);
+                        //     },
+                        //     child: const Text(
+                        //       "ADD NEW DISCOUNT",
+                        //       style: TextStyle(fontWeight: FontWeight.w600),
+                        //     ),
+                        //   ),
+                        // ),
+                        // const SizedBox(height: 12),
 
                         /// CUSTOM DISCOUNTS
                         if (_customDiscounts.isNotEmpty) ...[
@@ -1363,119 +1375,119 @@ class _OrderSidebarState extends State<OrderSidebar> {
     );
   }
 
-  void _showAddDiscountDialog(StateSetter setSheetState) {
-    String discountName = "";
-    double discountValue = 0;
-    bool isPercentage = true; // Default to percentage
-    final nameController = TextEditingController();
-    final valueController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text(
-            "Add New Discount",
-            style: TextStyle(fontFamily: 'SanFrancisco'),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: "Discount Name",
-                  labelStyle: TextStyle(fontFamily: 'SanFrancisco'),
-                  border: OutlineInputBorder(),
-                ),
-                onChanged: (value) {
-                  discountName = value;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: valueController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: "Discount Value",
-                  labelStyle: TextStyle(fontFamily: 'SanFrancisco'),
-                  border: OutlineInputBorder(),
-                ),
-                onChanged: (value) {
-                  discountValue = double.tryParse(value) ?? 0;
-                },
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      "Rupees (Rs)",
-                      style: TextStyle(fontFamily: 'SanFrancisco'),
-                    ),
-                  ),
-                  Checkbox(
-                    value:
-                        !isPercentage, // Inverted because checked means rupees, unchecked means percentage
-                    onChanged: (value) {
-                      setState(() {
-                        isPercentage = !(value ?? false);
-                      });
-                    },
-                  ),
-                  const Text(
-                    "Percentage",
-                    style: TextStyle(fontFamily: 'SanFrancisco'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () {
-                if (discountName.trim().isEmpty || discountValue <= 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        "Please enter valid discount name and value",
-                      ),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                  return;
-                }
+  // void _showAddDiscountDialog(StateSetter setSheetState) {
+  //   String discountName = "";
+  //   double discountValue = 0;
+  //   bool isPercentage = true; // Default to percentage
+  //   final nameController = TextEditingController();
+  //   final valueController = TextEditingController();
+  //   showDialog(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return AlertDialog(
+  //         title: const Text(
+  //           "Add New Discount",
+  //           style: TextStyle(fontFamily: 'SanFrancisco'),
+  //         ),
+  //         content: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             TextField(
+  //               controller: nameController,
+  //               decoration: const InputDecoration(
+  //                 labelText: "Discount Name",
+  //                 labelStyle: TextStyle(fontFamily: 'SanFrancisco'),
+  //                 border: OutlineInputBorder(),
+  //               ),
+  //               onChanged: (value) {
+  //                 discountName = value;
+  //               },
+  //             ),
+  //             const SizedBox(height: 16),
+  //             TextField(
+  //               controller: valueController,
+  //               keyboardType: TextInputType.number,
+  //               decoration: const InputDecoration(
+  //                 labelText: "Discount Value",
+  //                 labelStyle: TextStyle(fontFamily: 'SanFrancisco'),
+  //                 border: OutlineInputBorder(),
+  //               ),
+  //               onChanged: (value) {
+  //                 discountValue = double.tryParse(value) ?? 0;
+  //               },
+  //             ),
+  //             const SizedBox(height: 16),
+  //             Row(
+  //               children: [
+  //                 Expanded(
+  //                   child: Text(
+  //                     "Rupees (Rs)",
+  //                     style: TextStyle(fontFamily: 'SanFrancisco'),
+  //                   ),
+  //                 ),
+  //                 Checkbox(
+  //                   value:
+  //                       !isPercentage, // Inverted because checked means rupees, unchecked means percentage
+  //                   onChanged: (value) {
+  //                     setState(() {
+  //                       isPercentage = !(value ?? false);
+  //                     });
+  //                   },
+  //                 ),
+  //                 const Text(
+  //                   "Percentage",
+  //                   style: TextStyle(fontFamily: 'SanFrancisco'),
+  //                 ),
+  //               ],
+  //             ),
+  //           ],
+  //         ),
+  //         actions: [
+  //           TextButton(
+  //             onPressed: () {
+  //               Navigator.pop(context);
+  //             },
+  //             child: const Text("Cancel"),
+  //           ),
+  //           TextButton(
+  //             onPressed: () {
+  //               if (discountName.trim().isEmpty || discountValue <= 0) {
+  //                 ScaffoldMessenger.of(context).showSnackBar(
+  //                   const SnackBar(
+  //                     content: Text(
+  //                       "Please enter valid discount name and value",
+  //                     ),
+  //                     backgroundColor: Colors.red,
+  //                   ),
+  //                 );
+  //                 return;
+  //               }
 
-                // Add the new discount to the list
-                _customDiscounts.add({
-                  'name': discountName.trim(),
-                  'value': discountValue,
-                  'type': isPercentage ? 'percentage' : 'amount',
-                });
+  //               // Add the new discount to the list
+  //               _customDiscounts.add({
+  //                 'name': discountName.trim(),
+  //                 'value': discountValue,
+  //                 'type': isPercentage ? 'percentage' : 'amount',
+  //               });
 
-                // Close the dialog
-                Navigator.pop(context);
+  //               // Close the dialog
+  //               Navigator.pop(context);
 
-                // Show snackbar to confirm
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text("Added discount: \$discountName"),
-                    backgroundColor: const Color(0xff7CD23D),
-                  ),
-                );
-              },
-              child: const Text("Add"),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  //               // Show snackbar to confirm
+  //               ScaffoldMessenger.of(context).showSnackBar(
+  //                 SnackBar(
+  //                   content: Text("Added discount: \$discountName"),
+  //                   backgroundColor: const Color(0xff7CD23D),
+  //                 ),
+  //               );
+  //             },
+  //             child: const Text("Add"),
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
 
   void _showCouponSheet() {
     String tempCoupon = _couponCode;
@@ -1497,6 +1509,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              CloseButton(onPressed: () => Navigator.pop(context)),
               const Text(
                 "Apply Coupon",
                 style: TextStyle(
@@ -1674,6 +1687,121 @@ class _OrderSidebarState extends State<OrderSidebar> {
               ),
             );
           },
+        );
+      },
+    );
+  }
+
+  double _orderTip = 0;
+
+  void _showAddtipedChargeSheet() {
+    double tempTip = _orderTip;
+    final controller = TextEditingController(
+      text: tempTip > 0 ? tempTip.toString() : "",
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              /// TOP BAR
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: Colors.black12)),
+                ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    const Expanded(
+                      child: Text(
+                        "ADD TIP",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _orderTip = tempTip;
+                        });
+                        Navigator.pop(context);
+                      },
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                      child: const Text(
+                        "SAVE",
+                        style: TextStyle(color: Color(0xff7CD23D)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    /// INPUT LABEL
+                    const Text(
+                      "Enter Tip Amount",
+                      style: TextStyle(fontSize: 13),
+                    ),
+                    const SizedBox(height: 6),
+
+                    /// INPUT FIELD
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: controller,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              border: UnderlineInputBorder(),
+                              prefixText: "Rs ",
+                            ),
+                            onChanged: (v) {
+                              tempTip = double.tryParse(v) ?? 0;
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -2177,7 +2305,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                         ),
                         TextButton(
                           onPressed: () {
-                            _showSelectChargeSheet();
+                            _showAddtipedChargeSheet();
                           },
                           child: Text(
                             "Tips",
