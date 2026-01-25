@@ -678,6 +678,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
   final List<Map<String, dynamic>> _customDiscounts = [];
   double _orderTip = 0;
   bool _isDiscountPercentage = false;
+  bool _isTipPercentage = false;
 
   // Track highlighted item for animation
   String? _highlightedItemName;
@@ -1184,7 +1185,6 @@ class _OrderSidebarState extends State<OrderSidebar> {
   void _showDiscountSheet() {
     double tempDiscount = _orderDiscount;
     bool isPercentage = _isDiscountPercentage == true;
-
     final controller = TextEditingController(
       text: tempDiscount > 0 ? tempDiscount.toString() : "",
     );
@@ -1198,6 +1198,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
         return StatefulBuilder(
           builder: (context, setSheetState) {
             return Container(
+              height: MediaQuery.of(context).size.height * 0.4,
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
@@ -1236,30 +1237,6 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                   ),
                                 ),
                               ),
-                              // TextButton(
-                              //   onPressed: () {
-                              //     setState(() {
-                              //       _orderDiscount = tempDiscount;
-                              //       _isDiscountPercentage = isPercentage;
-                              //     });
-                              //     Navigator.pop(context);
-                              //   },
-                              //   style: TextButton.styleFrom(
-                              //     backgroundColor: Colors.white,
-                              //     padding: const EdgeInsets.symmetric(
-                              //       horizontal: 16,
-                              //       vertical: 8,
-                              //     ),
-                              //     shape: RoundedRectangleBorder(
-                              //       borderRadius: BorderRadius.circular(6),
-                              //     ),
-                              //     side: const BorderSide(color: Colors.black),
-                              //   ),
-                              //   child: const Text(
-                              //     "SAVE",
-                              //     style: TextStyle(color: Color(0xff7CD23D)),
-                              //   ),
-                              // ),
                             ],
                           ),
                         ),
@@ -1374,110 +1351,6 @@ class _OrderSidebarState extends State<OrderSidebar> {
     );
   }
 
-  void _showAddDiscountDialog(StateSetter setSheetState) {
-    String discountName = "";
-    double discountValue = 0;
-    bool isPercentage = true;
-    final nameController = TextEditingController();
-    final valueController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text(
-                "Add New Discount",
-                style: TextStyle(fontFamily: 'SanFrancisco'),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(
-                      labelText: "Discount Name",
-                      labelStyle: TextStyle(fontFamily: 'SanFrancisco'),
-                    ),
-                    onChanged: (value) => discountName = value,
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: valueController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: "Discount Value",
-                      labelStyle: TextStyle(fontFamily: 'SanFrancisco'),
-                    ),
-                    onChanged: (value) =>
-                        discountValue = double.tryParse(value) ?? 0,
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          "Type",
-                          style: TextStyle(fontFamily: 'SanFrancisco'),
-                        ),
-                      ),
-                      Checkbox(
-                        value: isPercentage,
-                        onChanged: (v) {
-                          setDialogState(() {
-                            isPercentage = v ?? true;
-                          });
-                        },
-                      ),
-                      Text(isPercentage ? "%" : "Rs"),
-                    ],
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("Cancel"),
-                ),
-                TextButton(
-                  onPressed: () {
-                    if (discountName.trim().isEmpty || discountValue <= 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            "Please enter valid discount name and value",
-                          ),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
-                    setState(() {
-                      _customDiscounts.add({
-                        'name': discountName.trim(),
-                        'value': discountValue,
-                        'type': isPercentage ? 'percentage' : 'amount',
-                      });
-                    });
-                    setSheetState(() {});
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text("Added discount: $discountName"),
-                        backgroundColor: const Color(0xff7CD23D),
-                      ),
-                    );
-                  },
-                  child: const Text("Add"),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
   void _showCouponSheet() {
     String tempCoupon = _couponCode;
     final controller = TextEditingController(text: tempCoupon);
@@ -1489,6 +1362,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
       ),
       builder: (context) {
         return Container(
+          height: MediaQuery.of(context).size.height * 0.4,
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
@@ -1526,29 +1400,29 @@ class _OrderSidebarState extends State<OrderSidebar> {
                               ),
                             ),
                           ),
-                          TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _couponCode = controller.text;
-                              });
-                              Navigator.pop(context);
-                            },
-                            style: TextButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              side: const BorderSide(color: Colors.black),
-                            ),
-                            child: const Text(
-                              "SAVE",
-                              style: TextStyle(color: Color(0xff7CD23D)),
-                            ),
-                          ),
+                          // TextButton(
+                          //   onPressed: () {
+                          //     setState(() {
+                          //       _couponCode = controller.text;
+                          //     });
+                          //     Navigator.pop(context);
+                          //   },
+                          //   style: TextButton.styleFrom(
+                          //     backgroundColor: Colors.white,
+                          //     padding: const EdgeInsets.symmetric(
+                          //       horizontal: 16,
+                          //       vertical: 8,
+                          //     ),
+                          //     shape: RoundedRectangleBorder(
+                          //       borderRadius: BorderRadius.circular(6),
+                          //     ),
+                          //     side: const BorderSide(color: Colors.black),
+                          //   ),
+                          //   child: const Text(
+                          //     "SAVE",
+                          //     style: TextStyle(color: Color(0xff7CD23D)),
+                          //   ),
+                          // ),
                         ],
                       ),
                     ),
@@ -1614,6 +1488,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
         return StatefulBuilder(
           builder: (context, setSheetState) {
             return Container(
+              height: MediaQuery.of(context).size.height * 0.4,
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
@@ -1626,12 +1501,21 @@ class _OrderSidebarState extends State<OrderSidebar> {
                       children: [
                         Container(
                           padding: const EdgeInsets.all(16),
-                          child: Text(
-                            chargeName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                            ),
+                          child: Row(
+                            spacing: 16,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: () => Navigator.pop(context),
+                              ),
+                              Text(
+                                chargeName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         Padding(
@@ -1669,56 +1553,56 @@ class _OrderSidebarState extends State<OrderSidebar> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xff7CD23D),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                              ),
-                              onPressed: () {
-                                final value =
-                                    double.tryParse(controller.text) ?? 0;
-                                if (value <= 0) return;
-                                setState(() {
-                                  _chargeTypes.add({
-                                    "name": chargeName,
-                                    "value": value,
-                                    "type": isPercentage
-                                        ? "percentage"
-                                        : "amount",
-                                    "active": true,
-                                  });
-                                  if (isPercentage) {
-                                    _packageCharges +=
-                                        (widget.items.fold<double>(
-                                          0,
-                                          (sum, item) =>
-                                              sum +
-                                              (item.price * item.quantity),
-                                        ) *
-                                        value /
-                                        100);
-                                  } else {
-                                    _packageCharges += value;
-                                  }
-                                });
-                                Navigator.pop(context);
-                              },
-                              child: const Text("APPLY"),
-                            ),
-                          ),
-                        ),
+                        // const SizedBox(height: 16),
+                        // Padding(
+                        //   padding: const EdgeInsets.all(16),
+                        //   child: SizedBox(
+                        //     width: double.infinity,
+                        //     child: ElevatedButton(
+                        //       style: ElevatedButton.styleFrom(
+                        //         backgroundColor: const Color(0xff7CD23D),
+                        //         padding: const EdgeInsets.symmetric(
+                        //           vertical: 14,
+                        //         ),
+                        //       ),
+                        //       onPressed: () {
+                        //         final value =
+                        //             double.tryParse(controller.text) ?? 0;
+                        //         if (value <= 0) return;
+                        //         setState(() {
+                        //           _chargeTypes.add({
+                        //             "name": chargeName,
+                        //             "value": value,
+                        //             "type": isPercentage
+                        //                 ? "percentage"
+                        //                 : "amount",
+                        //             "active": true,
+                        //           });
+                        //           if (isPercentage) {
+                        //             _packageCharges +=
+                        //                 (widget.items.fold<double>(
+                        //                   0,
+                        //                   (sum, item) =>
+                        //                       sum +
+                        //                       (item.price * item.quantity),
+                        //                 ) *
+                        //                 value /
+                        //                 100);
+                        //           } else {
+                        //             _packageCharges += value;
+                        //           }
+                        //         });
+                        //         Navigator.pop(context);
+                        //       },
+                        //       child: const Text("APPLY"),
+                        //     ),
+                        //   ),
+                        // ),
                       ],
                     ),
                   ),
                   Container(
-                    width: 450,
+                    width: 390,
                     decoration: const BoxDecoration(
                       border: Border(left: BorderSide(color: Colors.black12)),
                     ),
@@ -1776,6 +1660,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
 
   void _showAddtipedChargeSheet() {
     double tempTip = _orderTip;
+    bool isPercentage = _isTipPercentage == true;
     final controller = TextEditingController(
       text: tempTip > 0 ? tempTip.toString() : "",
     );
@@ -1786,115 +1671,140 @@ class _OrderSidebarState extends State<OrderSidebar> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
-        return Container(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      decoration: const BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(color: Colors.black12),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () => Navigator.pop(context),
-                          ),
-                          const Expanded(
-                            child: Text(
-                              "ADD TIP",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _orderTip =
-                                    double.tryParse(controller.text) ?? 0;
-                              });
-                              Navigator.pop(context);
-                            },
-                            style: TextButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              side: const BorderSide(color: Colors.black),
-                            ),
-                            child: const Text(
-                              "SAVE",
-                              style: TextStyle(color: Color(0xff7CD23D)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: TextField(
-                        controller: controller,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          isDense: true,
-                          labelText: "Tip Amount",
-                          prefixText: "Rs ",
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.4,
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
-              Container(
-                width: 450,
-                decoration: const BoxDecoration(
-                  border: Border(left: BorderSide(color: Colors.black12)),
-                ),
-                child: CustomKeyboard(
-                  controller: controller,
-                  onClose: () {
-                    setState(() {
-                      _orderTip = double.tryParse(controller.text) ?? 0;
-                    });
-                    Navigator.pop(context);
-                  },
-                  onDiscount: () {
-                    Navigator.pop(context);
-                    _showDiscountSheet();
-                  },
-                  onCoupon: () {
-                    Navigator.pop(context);
-                    _showCouponSheet();
-                  },
-                  onCharges: () {
-                    Navigator.pop(context);
-                    _showSelectChargeSheet();
-                  },
-                  onTips: () {},
-                ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          decoration: const BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(color: Colors.black12),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: () => Navigator.pop(context),
+                              ),
+                              const Expanded(
+                                child: Text(
+                                  "ADD TIP",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                              // TextButton(
+                              //   onPressed: () {
+                              //     setState(() {
+                              //       _orderTip =
+                              //           double.tryParse(controller.text) ?? 0;
+                              //       _isTipPercentage = isPercentage;
+                              //     });
+                              //     Navigator.pop(context);
+                              //   },
+                              //   style: TextButton.styleFrom(
+                              //     backgroundColor: Colors.white,
+                              //     padding: const EdgeInsets.symmetric(
+                              //       horizontal: 16,
+                              //       vertical: 8,
+                              //     ),
+                              //     shape: RoundedRectangleBorder(
+                              //       borderRadius: BorderRadius.circular(6),
+                              //     ),
+                              //     side: const BorderSide(color: Colors.black),
+                              //   ),
+                              //   child: const Text(
+                              //     "SAVE",
+                              //     style: TextStyle(color: Color(0xff7CD23D)),
+                              //   ),
+                              // ),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: controller,
+                                  keyboardType: TextInputType.number,
+                                  decoration: InputDecoration(
+                                    isDense: true,
+                                    labelText: isPercentage
+                                        ? "Percentage"
+                                        : "Amount",
+                                    prefixText: isPercentage ? "% " : "Rs ",
+                                  ),
+                                ),
+                              ),
+                              Checkbox(
+                                value: isPercentage,
+                                onChanged: (v) {
+                                  setSheetState(() {
+                                    isPercentage = v ?? true;
+                                  });
+                                },
+                              ),
+                              Text(isPercentage ? "%" : "Rs"),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    width: 390,
+                    decoration: const BoxDecoration(
+                      border: Border(left: BorderSide(color: Colors.black12)),
+                    ),
+                    child: CustomKeyboard(
+                      controller: controller,
+                      onClose: () {
+                        setState(() {
+                          _orderTip = double.tryParse(controller.text) ?? 0;
+                          _isTipPercentage = isPercentage;
+                        });
+                        Navigator.pop(context);
+                      },
+                      onDiscount: () {
+                        Navigator.pop(context);
+                        _showDiscountSheet();
+                      },
+                      onCoupon: () {
+                        Navigator.pop(context);
+                        _showCouponSheet();
+                      },
+                      onCharges: () {
+                        Navigator.pop(context);
+                        _showSelectChargeSheet();
+                      },
+                      onTips: () {},
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -2019,13 +1929,16 @@ class _OrderSidebarState extends State<OrderSidebar> {
     final discountAmount = (_isDiscountPercentage == true)
         ? (subtotal * _orderDiscount / 100)
         : _orderDiscount;
+    final tipAmount = (_isTipPercentage == true)
+        ? (subtotal * _orderTip / 100)
+        : _orderTip;
     final total =
         subtotal +
         tax -
         discountAmount +
         _deliveryCharges +
         _packageCharges +
-        _orderTip;
+        tipAmount;
     bool customerSelected = widget.customerName.isNotEmpty;
 
     return Padding(
@@ -2140,7 +2053,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                         duration: const Duration(milliseconds: 300),
                         decoration: BoxDecoration(
                           color: isHighlighted
-                              ? const Color(0xff7CD23D).withOpacity(0.1)
+                              ? const Color(0xff7CD23D).withValues(alpha: 0.1)
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -2196,10 +2109,10 @@ class _OrderSidebarState extends State<OrderSidebar> {
                       "Rs ${_packageCharges.toStringAsFixed(2)}",
                       false,
                     ),
-                  if (_orderTip > 0)
+                  if (tipAmount > 0)
                     _summaryRow(
                       "Tip",
-                      "Rs ${_orderTip.toStringAsFixed(2)}",
+                      "Rs ${tipAmount.toStringAsFixed(2)}",
                       false,
                     ),
                   const SizedBox(height: 8),
@@ -2208,7 +2121,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                   Container(
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xff7CD23D).withOpacity(0.1),
+                      color: const Color(0xff7CD23D).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:itemedit/ui/trade/model/product_class.dart';
 import 'dart:async';
 
+import '../trade_landing_page.dart';
+
 // ignore: must_be_immutable
 class PaymentBody extends StatefulWidget {
   final List<OrderItem> items;
@@ -471,7 +473,7 @@ class _PaymentBodyState extends State<PaymentBody> {
                               ),
                             )
                           : null,
-                      border: const OutlineInputBorder(),
+                      // border: const OutlineInputBorder(),
                     ),
                     enabled: false,
                   ),
@@ -608,23 +610,14 @@ class _PaymentBodyState extends State<PaymentBody> {
                             ),
                           ],
                         ),
-                        Row(
-                          spacing: 10,
-                          children: [
-                            const Text(
-                              "Total amount",
-                              style: TextStyle(fontFamily: 'SanFrancisco'),
-                            ),
-                            Text(
-                              "Rs ${widget.total.toStringAsFixed(2)}",
-                              style: const TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1E293B),
-                                fontFamily: 'SanFrancisco',
-                              ),
-                            ),
-                          ],
+                        Text(
+                          "Rs ${widget.total.toStringAsFixed(2)}",
+                          style: const TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E293B),
+                            fontFamily: 'SanFrancisco',
+                          ),
                         ),
                         if (!isSmallScreen)
                           TextButton(
@@ -825,7 +818,7 @@ class _PaymentBodyState extends State<PaymentBody> {
       ),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
+          constraints: const BoxConstraints(maxWidth: 490),
           child: isSmallScreen
               ? Column(
                   children: [
@@ -1135,9 +1128,9 @@ class _PaymentBodyState extends State<PaymentBody> {
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () {},
-                            icon: const Icon(Icons.download, size: 16),
+                            icon: const Icon(Icons.receipt, size: 16),
                             label: const Text(
-                              "Download",
+                              "Recipt",
                               style: TextStyle(fontFamily: 'SanFrancisco'),
                             ),
                           ),
@@ -1162,7 +1155,12 @@ class _PaymentBodyState extends State<PaymentBody> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => POSLandingPage(),
+                            ),
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
@@ -1294,6 +1292,12 @@ class _PaymentBodyState extends State<PaymentBody> {
               }
             },
             child: Container(
+              decoration: BoxDecoration(
+                border: Border.symmetric(
+                  vertical: BorderSide(width: 0.09),
+                  horizontal: BorderSide(width: 0.09),
+                ),
+              ),
               height: 70,
               child: Center(
                 child: Text(

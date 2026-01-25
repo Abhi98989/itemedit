@@ -58,8 +58,6 @@ class OrderItemTile extends StatelessWidget {
                             Text(
                               item.note!,
                               style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
                                 color: Color(0xFF1E293B),
                                 fontFamily: 'SanFrancisco',
                               ),
