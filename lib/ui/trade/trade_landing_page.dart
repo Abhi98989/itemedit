@@ -4,6 +4,7 @@ import 'package:itemedit/ui/trade/widget/orderitemtiler.dart';
 import 'package:itemedit/ui/trade/model/product_class.dart';
 import 'widget/productarea.dart';
 import 'widget/payment_widget.dart';
+import 'widget/custom_num.dart';
 
 class POSLandingPage extends StatefulWidget {
   const POSLandingPage({super.key});
@@ -95,7 +96,6 @@ class _POSLandingPageState extends State<POSLandingPage> {
                         ],
                       ),
                       const SizedBox(height: 16),
-
                       // Search Field
                       TextField(
                         controller: searchController,
@@ -373,9 +373,14 @@ class _POSLandingPageState extends State<POSLandingPage> {
     setState(() {
       final index = items.indexWhere((item) => item.name == product.name);
       if (index != -1) {
+        // Item exists, update quantity and move to top
         items[index].quantity += quantity;
+        final item = items.removeAt(index);
+        items.insert(0, item);
       } else {
-        items.add(
+        // New item, add to top
+        items.insert(
+          0,
           OrderItem(
             name: product.name,
             quantity: quantity,
@@ -428,6 +433,9 @@ class _POSLandingPageState extends State<POSLandingPage> {
                 onQuantityChange: (index, newQty) {
                   setState(() {
                     items[index].quantity = newQty;
+                    // Move the updated item to the top
+                    final item = items.removeAt(index);
+                    items.insert(0, item);
                   });
                 },
                 onCustomerSelect: _showCustomerSelectionDialog,
@@ -446,7 +454,7 @@ class _POSLandingPageState extends State<POSLandingPage> {
           ),
           // Main Content Area (Product Grid / Payment Content)
           Expanded(
-            child: isPaymentMode
+            child: (isPaymentMode == true)
                 ? PaymentBody(
                     items: items,
                     subtotal: subtotal,
@@ -667,6 +675,40 @@ class _OrderSidebarState extends State<OrderSidebar> {
 
   // Store dynamic charges
   final List<Map<String, dynamic>> _chargeTypes = [];
+  final List<Map<String, dynamic>> _customDiscounts = [];
+  double _orderTip = 0;
+  bool _isDiscountPercentage = false;
+
+  // Track highlighted item for animation
+  String? _highlightedItemName;
+
+  @override
+  void didUpdateWidget(OrderSidebar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Detect if items list changed (new item added or reordered)
+    if (widget.items.isNotEmpty &&
+        (oldWidget.items.isEmpty ||
+            oldWidget.items.first.name != widget.items.first.name ||
+            (oldWidget.items.isNotEmpty &&
+                oldWidget.items.first.quantity !=
+                    widget.items.first.quantity))) {
+      // Highlight the first item (most recently updated)
+      setState(() {
+        _highlightedItemName = widget.items.first.name;
+      });
+
+      // Remove highlight after animation
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (mounted) {
+          setState(() {
+            _highlightedItemName = null;
+          });
+        }
+      });
+    }
+  }
+
   void _showEditItemDialog(BuildContext context, int index) {
     final item = widget.items[index];
     int tempQty = item.quantity;
@@ -742,9 +784,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                 ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
-                                  side: const BorderSide(
-                                    color: Color(0xff7CD23D),
-                                  ),
+                                  side: const BorderSide(color: Colors.black),
                                 ),
                               ),
                               onPressed: () {
@@ -1062,8 +1102,6 @@ class _OrderSidebarState extends State<OrderSidebar> {
   }
 
   // Helper widgets
-  // Store dynamic discounts
-  final List<Map<String, dynamic>> _customDiscounts = [];
 
   Widget _circleButton(IconData icon, VoidCallback onPressed) {
     return Container(
@@ -1145,225 +1183,186 @@ class _OrderSidebarState extends State<OrderSidebar> {
 
   void _showDiscountSheet() {
     double tempDiscount = _orderDiscount;
-    bool isPercentage = false;
+    bool isPercentage = _isDiscountPercentage == true;
 
     final controller = TextEditingController(
       text: tempDiscount > 0 ? tempDiscount.toString() : "",
     );
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            return Padding(
+            return Container(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// TOP BAR
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: const BoxDecoration(
-                      border: Border(bottom: BorderSide(color: Colors.black12)),
-                    ),
-                    child: Row(
+                  // Left Content
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                        const Expanded(
-                          child: Text(
-                            "SELECT OR ENTER DISCOUNT VALUE",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
+                        /// TOP BAR
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          decoration: const BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(color: Colors.black12),
                             ),
                           ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _orderDiscount = tempDiscount;
-                            });
-                            Navigator.pop(context);
-                          },
-                          style: TextButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),
-                            ),
+                          child: Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: () => Navigator.pop(context),
+                              ),
+                              const Expanded(
+                                child: Text(
+                                  "ADD DISCOUNT",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                              // TextButton(
+                              //   onPressed: () {
+                              //     setState(() {
+                              //       _orderDiscount = tempDiscount;
+                              //       _isDiscountPercentage = isPercentage;
+                              //     });
+                              //     Navigator.pop(context);
+                              //   },
+                              //   style: TextButton.styleFrom(
+                              //     backgroundColor: Colors.white,
+                              //     padding: const EdgeInsets.symmetric(
+                              //       horizontal: 16,
+                              //       vertical: 8,
+                              //     ),
+                              //     shape: RoundedRectangleBorder(
+                              //       borderRadius: BorderRadius.circular(6),
+                              //     ),
+                              //     side: const BorderSide(color: Colors.black),
+                              //   ),
+                              //   child: const Text(
+                              //     "SAVE",
+                              //     style: TextStyle(color: Color(0xff7CD23D)),
+                              //   ),
+                              // ),
+                            ],
                           ),
-                          child: const Text(
-                            "SAVE",
-                            style: TextStyle(color: Color(0xff7CD23D)),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: controller,
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(
+                                        isDense: true,
+                                        label: Text(
+                                          isPercentage
+                                              ? "Enter in percentage %"
+                                              : "Enter in Amount Rs",
+                                        ),
+                                        prefixText: isPercentage ? "%" : "Rs",
+                                      ),
+                                      onChanged: (v) {
+                                        tempDiscount = double.tryParse(v) ?? 0;
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Checkbox(
+                                    value: isPercentage,
+                                    onChanged: (v) {
+                                      setSheetState(() {
+                                        isPercentage = v ?? true;
+                                      });
+                                    },
+                                  ),
+                                  Text(isPercentage ? "%" : "Rs"),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: _customDiscounts.map((discount) {
+                                  return FilterChip(
+                                    label: Text(
+                                      "${discount['name']} (${discount['value']}${discount['type'] == 'percentage' ? '%' : 'Rs'})",
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                    selected: false,
+                                    onSelected: (bool selected) {
+                                      setSheetState(() {
+                                        isPercentage =
+                                            discount['type'] == 'percentage';
+                                        tempDiscount = discount['value'];
+                                        controller.text = discount['value']
+                                            .toString();
+                                      });
+                                    },
+                                    backgroundColor: Colors.grey.shade200,
+                                    selectedColor: const Color(0xff7CD23D),
+                                    checkmarkColor: Colors.white,
+                                  );
+                                }).toList(),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
-
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        /// INPUT LABEL
-                        Text(
-                          isPercentage
-                              ? "Enter Discount in %"
-                              : "Enter Discount Amount",
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                        const SizedBox(height: 6),
-
-                        /// INPUT FIELD
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: controller,
-                                keyboardType: TextInputType.number,
-                                decoration: InputDecoration(
-                                  isDense: true,
-                                  border: UnderlineInputBorder(),
-                                  prefixText: isPercentage ? "%" : "Rs",
-                                ),
-                                onChanged: (v) {
-                                  tempDiscount = double.tryParse(v) ?? 0;
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Checkbox(
-                              value: isPercentage,
-                              onChanged: (v) {
-                                setSheetState(() {
-                                  isPercentage = v ?? true;
-                                });
-                              },
-                            ),
-                            Text(isPercentage ? "%" : "Rs"),
-                          ],
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        /// ADD NEW DISCOUNT
-                        // Center(
-                        //   child: TextButton(
-                        //     onPressed: () {
-                        //       // Show dialog to add new discount type
-                        //       _showAddDiscountDialog(setSheetState);
-                        //     },
-                        //     child: const Text(
-                        //       "ADD NEW DISCOUNT",
-                        //       style: TextStyle(fontWeight: FontWeight.w600),
-                        //     ),
-                        //   ),
-                        // ),
-                        // const SizedBox(height: 12),
-
-                        /// CUSTOM DISCOUNTS
-                        if (_customDiscounts.isNotEmpty) ...[
-                          Text(
-                            "Custom Discounts",
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: _customDiscounts.map((discount) {
-                              return FilterChip(
-                                label: Text(
-                                  "${discount['name']} (${discount['value']}%)",
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                                selected: false,
-                                onSelected: (bool selected) {
-                                  setSheetState(() {
-                                    isPercentage =
-                                        discount['type'] == 'percentage';
-                                    tempDiscount = discount['value'];
-                                    controller.text = discount['value']
-                                        .toString();
-                                  });
-                                },
-                                backgroundColor: Colors.grey.shade200,
-                                selectedColor: const Color(0xff7CD23D),
-                                checkmarkColor: Colors.white,
-                              );
-                            }).toList(),
-                          ),
-                          const SizedBox(height: 12),
-                        ],
-
-                        /// PRESET DISCOUNTS
-                        // Text(
-                        //   "Preset Discounts",
-                        //   style: const TextStyle(
-                        //     fontWeight: FontWeight.bold,
-                        //     fontSize: 14,
-                        //   ),
-                        // ),
-
-                        // const SizedBox(height: 8),
-                        // Wrap(
-                        //   spacing: 8,
-                        //   runSpacing: 8,
-                        //   children: [
-                        //     FilterChip(
-                        //       label: const Text("ABISEK (10%)"),
-                        //       selected: false,
-                        //       onSelected: (bool selected) {
-                        //         setSheetState(() {
-                        //           isPercentage = true;
-                        //           tempDiscount = 10;
-                        //           controller.text = "10";
-                        //         });
-                        //       },
-                        //       backgroundColor: Colors.grey.shade200,
-                        //       selectedColor: const Color(0xff7CD23D),
-                        //       checkmarkColor: Colors.white,
-                        //     ),
-                        //     FilterChip(
-                        //       label: const Text("INSOFT (10%)"),
-                        //       selected: false,
-                        //       onSelected: (bool selected) {
-                        //         setSheetState(() {
-                        //           isPercentage = true;
-                        //           tempDiscount = 10;
-                        //           controller.text = "10";
-                        //         });
-                        //       },
-                        //       backgroundColor: Colors.grey.shade200,
-                        //       selectedColor: const Color(0xff7CD23D),
-                        //       checkmarkColor: Colors.white,
-                        //     ),
-                        //   ],
-                        // ),
-                        const SizedBox(height: 20),
-                      ],
+                  // Right Keyboard
+                  Container(
+                    width: 380,
+                    decoration: const BoxDecoration(
+                      border: Border(left: BorderSide(color: Colors.black12)),
+                    ),
+                    child: CustomKeyboard(
+                      controller: controller,
+                      onClose: () {
+                        setState(() {
+                          _orderDiscount =
+                              double.tryParse(controller.text) ?? 0;
+                          _isDiscountPercentage = isPercentage;
+                        });
+                        Navigator.pop(context);
+                      },
+                      onDiscount: () {},
+                      onCoupon: () {
+                        Navigator.pop(context);
+                        _showCouponSheet();
+                      },
+                      onCharges: () {
+                        Navigator.pop(context);
+                        _showSelectChargeSheet();
+                      },
+                      onTips: () {
+                        Navigator.pop(context);
+                        _showAddtipedChargeSheet();
+                      },
                     ),
                   ),
                 ],
@@ -1375,122 +1374,113 @@ class _OrderSidebarState extends State<OrderSidebar> {
     );
   }
 
-  // void _showAddDiscountDialog(StateSetter setSheetState) {
-  //   String discountName = "";
-  //   double discountValue = 0;
-  //   bool isPercentage = true; // Default to percentage
-  //   final nameController = TextEditingController();
-  //   final valueController = TextEditingController();
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         title: const Text(
-  //           "Add New Discount",
-  //           style: TextStyle(fontFamily: 'SanFrancisco'),
-  //         ),
-  //         content: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //             TextField(
-  //               controller: nameController,
-  //               decoration: const InputDecoration(
-  //                 labelText: "Discount Name",
-  //                 labelStyle: TextStyle(fontFamily: 'SanFrancisco'),
-  //                 border: OutlineInputBorder(),
-  //               ),
-  //               onChanged: (value) {
-  //                 discountName = value;
-  //               },
-  //             ),
-  //             const SizedBox(height: 16),
-  //             TextField(
-  //               controller: valueController,
-  //               keyboardType: TextInputType.number,
-  //               decoration: const InputDecoration(
-  //                 labelText: "Discount Value",
-  //                 labelStyle: TextStyle(fontFamily: 'SanFrancisco'),
-  //                 border: OutlineInputBorder(),
-  //               ),
-  //               onChanged: (value) {
-  //                 discountValue = double.tryParse(value) ?? 0;
-  //               },
-  //             ),
-  //             const SizedBox(height: 16),
-  //             Row(
-  //               children: [
-  //                 Expanded(
-  //                   child: Text(
-  //                     "Rupees (Rs)",
-  //                     style: TextStyle(fontFamily: 'SanFrancisco'),
-  //                   ),
-  //                 ),
-  //                 Checkbox(
-  //                   value:
-  //                       !isPercentage, // Inverted because checked means rupees, unchecked means percentage
-  //                   onChanged: (value) {
-  //                     setState(() {
-  //                       isPercentage = !(value ?? false);
-  //                     });
-  //                   },
-  //                 ),
-  //                 const Text(
-  //                   "Percentage",
-  //                   style: TextStyle(fontFamily: 'SanFrancisco'),
-  //                 ),
-  //               ],
-  //             ),
-  //           ],
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () {
-  //               Navigator.pop(context);
-  //             },
-  //             child: const Text("Cancel"),
-  //           ),
-  //           TextButton(
-  //             onPressed: () {
-  //               if (discountName.trim().isEmpty || discountValue <= 0) {
-  //                 ScaffoldMessenger.of(context).showSnackBar(
-  //                   const SnackBar(
-  //                     content: Text(
-  //                       "Please enter valid discount name and value",
-  //                     ),
-  //                     backgroundColor: Colors.red,
-  //                   ),
-  //                 );
-  //                 return;
-  //               }
-
-  //               // Add the new discount to the list
-  //               _customDiscounts.add({
-  //                 'name': discountName.trim(),
-  //                 'value': discountValue,
-  //                 'type': isPercentage ? 'percentage' : 'amount',
-  //               });
-
-  //               // Close the dialog
-  //               Navigator.pop(context);
-
-  //               // Show snackbar to confirm
-  //               ScaffoldMessenger.of(context).showSnackBar(
-  //                 SnackBar(
-  //                   content: Text("Added discount: \$discountName"),
-  //                   backgroundColor: const Color(0xff7CD23D),
-  //                 ),
-  //               );
-  //             },
-  //             child: const Text("Add"),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
+  void _showAddDiscountDialog(StateSetter setSheetState) {
+    String discountName = "";
+    double discountValue = 0;
+    bool isPercentage = true;
+    final nameController = TextEditingController();
+    final valueController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text(
+                "Add New Discount",
+                style: TextStyle(fontFamily: 'SanFrancisco'),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: "Discount Name",
+                      labelStyle: TextStyle(fontFamily: 'SanFrancisco'),
+                    ),
+                    onChanged: (value) => discountName = value,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: valueController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: "Discount Value",
+                      labelStyle: TextStyle(fontFamily: 'SanFrancisco'),
+                    ),
+                    onChanged: (value) =>
+                        discountValue = double.tryParse(value) ?? 0,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          "Type",
+                          style: TextStyle(fontFamily: 'SanFrancisco'),
+                        ),
+                      ),
+                      Checkbox(
+                        value: isPercentage,
+                        onChanged: (v) {
+                          setDialogState(() {
+                            isPercentage = v ?? true;
+                          });
+                        },
+                      ),
+                      Text(isPercentage ? "%" : "Rs"),
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+                TextButton(
+                  onPressed: () {
+                    if (discountName.trim().isEmpty || discountValue <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            "Please enter valid discount name and value",
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+                    setState(() {
+                      _customDiscounts.add({
+                        'name': discountName.trim(),
+                        'value': discountValue,
+                        'type': isPercentage ? 'percentage' : 'amount',
+                      });
+                    });
+                    setSheetState(() {});
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Added discount: $discountName"),
+                        backgroundColor: const Color(0xff7CD23D),
+                      ),
+                    );
+                  },
+                  child: const Text("Add"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 
   void _showCouponSheet() {
     String tempCoupon = _couponCode;
+    final controller = TextEditingController(text: tempCoupon);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1498,61 +1488,112 @@ class _OrderSidebarState extends State<OrderSidebar> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return Padding(
+        return Container(
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 16,
-            right: 16,
-            top: 16,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CloseButton(onPressed: () => Navigator.pop(context)),
-              const Text(
-                "Apply Coupon",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'SanFrancisco',
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Colors.black12),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                          const Expanded(
+                            child: Text(
+                              "APPLY COUPON",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _couponCode = controller.text;
+                              });
+                              Navigator.pop(context);
+                            },
+                            style: TextButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              side: const BorderSide(color: Colors.black),
+                            ),
+                            child: const Text(
+                              "SAVE",
+                              style: TextStyle(color: Color(0xff7CD23D)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: TextField(
+                        controller: controller,
+                        decoration: const InputDecoration(
+                          labelText: "Coupon Code",
+                          labelStyle: TextStyle(fontFamily: 'SanFrancisco'),
+                          prefixIcon: Icon(Icons.confirmation_number_outlined),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: TextEditingController(text: tempCoupon),
-                decoration: const InputDecoration(
-                  labelText: "Coupon Code",
-                  labelStyle: TextStyle(fontFamily: 'SanFrancisco'),
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.confirmation_number_outlined),
+              Container(
+                width: 450,
+                decoration: const BoxDecoration(
+                  border: Border(left: BorderSide(color: Colors.black12)),
                 ),
-                onChanged: (val) {
-                  tempCoupon = val;
-                },
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
+                child: CustomKeyboard(
+                  controller: controller,
+                  onClose: () {
                     setState(() {
-                      _couponCode = tempCoupon;
+                      _couponCode = controller.text;
                     });
                     Navigator.pop(context);
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xff7CD23D),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: const Text(
-                    "Apply Coupon",
-                    style: TextStyle(fontFamily: 'SanFrancisco'),
-                  ),
+                  onDiscount: () {
+                    Navigator.pop(context);
+                    _showDiscountSheet();
+                  },
+                  onCoupon: () {},
+                  onCharges: () {
+                    Navigator.pop(context);
+                    _showSelectChargeSheet();
+                  },
+                  onTips: () {
+                    Navigator.pop(context);
+                    _showAddtipedChargeSheet();
+                  },
                 ),
               ),
-              const SizedBox(height: 16),
             ],
           ),
         );
@@ -1563,7 +1604,6 @@ class _OrderSidebarState extends State<OrderSidebar> {
   void _showChargeAmountSheet(String chargeName) {
     final controller = TextEditingController();
     bool isPercentage = false;
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1573,114 +1613,156 @@ class _OrderSidebarState extends State<OrderSidebar> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            return Padding(
+            return Container(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// HEADER
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      chargeName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Expanded(
-                          child: TextField(
-                            controller: controller,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              labelText: isPercentage
-                                  ? "Percentage (%)"
-                                  : "Amount (Rs)",
-                              prefixText: isPercentage ? "% " : "Rs ",
-                              border: const OutlineInputBorder(),
-                              labelStyle: const TextStyle(
-                                fontFamily: 'SanFrancisco',
-                              ),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(
+                            chargeName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
                             ),
-                            style: const TextStyle(fontFamily: 'SanFrancisco'),
                           ),
                         ),
-                        const SizedBox(width: 8),
-
-                        // Container(
-                        //   decoration: BoxDecoration(
-                        //     border: Border.all(color: Colors.grey.shade300),
-                        //     borderRadius: BorderRadius.circular(8),
-                        //   ),
-                        //   child: ChoiceChip(
-                        //     label: Text(isPercentage ? "%" : "Rs"),
-                        //     selected: isPercentage,
-                        //     onSelected: (selected) {
-                        //       setSheetState(() {
-                        //         isPercentage = selected;
-                        //       });
-                        //     },
-                        //   ),
-                        // ),
-
-                        /// TOGGLE % / RS
-                        ToggleButtons(
-                          isSelected: [isPercentage, !isPercentage],
-                          onPressed: (index) {
-                            setSheetState(() {
-                              isPercentage = index == 0;
-                            });
-                          },
-                          children: const [
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 12),
-                              child: Text("%"),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: controller,
+                                  keyboardType: TextInputType.number,
+                                  decoration: InputDecoration(
+                                    labelText: isPercentage
+                                        ? "Percentage (%)"
+                                        : "Amount (Rs)",
+                                    prefixText: isPercentage ? "% " : "Rs ",
+                                    labelStyle: const TextStyle(
+                                      fontFamily: 'SanFrancisco',
+                                    ),
+                                  ),
+                                  style: const TextStyle(
+                                    fontFamily: 'SanFrancisco',
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Checkbox(
+                                value: isPercentage,
+                                onChanged: (v) {
+                                  setSheetState(() {
+                                    isPercentage = v ?? true;
+                                  });
+                                },
+                              ),
+                              Text(isPercentage ? "%" : "Rs"),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xff7CD23D),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                              ),
+                              onPressed: () {
+                                final value =
+                                    double.tryParse(controller.text) ?? 0;
+                                if (value <= 0) return;
+                                setState(() {
+                                  _chargeTypes.add({
+                                    "name": chargeName,
+                                    "value": value,
+                                    "type": isPercentage
+                                        ? "percentage"
+                                        : "amount",
+                                    "active": true,
+                                  });
+                                  if (isPercentage) {
+                                    _packageCharges +=
+                                        (widget.items.fold<double>(
+                                          0,
+                                          (sum, item) =>
+                                              sum +
+                                              (item.price * item.quantity),
+                                        ) *
+                                        value /
+                                        100);
+                                  } else {
+                                    _packageCharges += value;
+                                  }
+                                });
+                                Navigator.pop(context);
+                              },
+                              child: const Text("APPLY"),
                             ),
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 12),
-                              child: Text("Rs"),
-                            ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-
-                  /// APPLY
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xff7CD23D),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        onPressed: () {
-                          final value = double.tryParse(controller.text) ?? 0;
-                          if (value <= 0) return;
-
+                  Container(
+                    width: 450,
+                    decoration: const BoxDecoration(
+                      border: Border(left: BorderSide(color: Colors.black12)),
+                    ),
+                    child: CustomKeyboard(
+                      controller: controller,
+                      onClose: () {
+                        final value = double.tryParse(controller.text) ?? 0;
+                        if (value > 0) {
                           setState(() {
                             _chargeTypes.add({
                               "name": chargeName,
                               "value": value,
                               "type": isPercentage ? "percentage" : "amount",
+                              "active": true,
                             });
+                            if (isPercentage) {
+                              _packageCharges +=
+                                  (widget.items.fold<double>(
+                                    0,
+                                    (sum, item) =>
+                                        sum + (item.price * item.quantity),
+                                  ) *
+                                  value /
+                                  100);
+                            } else {
+                              _packageCharges += value;
+                            }
                           });
-
-                          Navigator.pop(context);
-                        },
-                        child: const Text("APPLY"),
-                      ),
+                        }
+                        Navigator.pop(context);
+                      },
+                      onDiscount: () {
+                        Navigator.pop(context);
+                        _showDiscountSheet();
+                      },
+                      onCoupon: () {
+                        Navigator.pop(context);
+                        _showCouponSheet();
+                      },
+                      onCharges: () {},
+                      onTips: () {
+                        Navigator.pop(context);
+                        _showAddtipedChargeSheet();
+                      },
                     ),
                   ),
                 ],
@@ -1692,14 +1774,11 @@ class _OrderSidebarState extends State<OrderSidebar> {
     );
   }
 
-  double _orderTip = 0;
-
   void _showAddtipedChargeSheet() {
     double tempTip = _orderTip;
     final controller = TextEditingController(
       text: tempTip > 0 ? tempTip.toString() : "",
     );
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1707,97 +1786,111 @@ class _OrderSidebarState extends State<OrderSidebar> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
-        return Padding(
+        return Container(
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// TOP BAR
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                decoration: const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: Colors.black12)),
-                ),
-                child: Row(
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    const Expanded(
-                      child: Text(
-                        "ADD TIP",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Colors.black12),
                         ),
                       ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _orderTip = tempTip;
-                        });
-                        Navigator.pop(context);
-                      },
-                      style: TextButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
-                        ),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                          const Expanded(
+                            child: Text(
+                              "ADD TIP",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _orderTip =
+                                    double.tryParse(controller.text) ?? 0;
+                              });
+                              Navigator.pop(context);
+                            },
+                            style: TextButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              side: const BorderSide(color: Colors.black),
+                            ),
+                            child: const Text(
+                              "SAVE",
+                              style: TextStyle(color: Color(0xff7CD23D)),
+                            ),
+                          ),
+                        ],
                       ),
-                      child: const Text(
-                        "SAVE",
-                        style: TextStyle(color: Color(0xff7CD23D)),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: TextField(
+                        controller: controller,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          labelText: "Tip Amount",
+                          prefixText: "Rs ",
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    /// INPUT LABEL
-                    const Text(
-                      "Enter Tip Amount",
-                      style: TextStyle(fontSize: 13),
-                    ),
-                    const SizedBox(height: 6),
-
-                    /// INPUT FIELD
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: controller,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              isDense: true,
-                              border: UnderlineInputBorder(),
-                              prefixText: "Rs ",
-                            ),
-                            onChanged: (v) {
-                              tempTip = double.tryParse(v) ?? 0;
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                  ],
+              Container(
+                width: 450,
+                decoration: const BoxDecoration(
+                  border: Border(left: BorderSide(color: Colors.black12)),
+                ),
+                child: CustomKeyboard(
+                  controller: controller,
+                  onClose: () {
+                    setState(() {
+                      _orderTip = double.tryParse(controller.text) ?? 0;
+                    });
+                    Navigator.pop(context);
+                  },
+                  onDiscount: () {
+                    Navigator.pop(context);
+                    _showDiscountSheet();
+                  },
+                  onCoupon: () {
+                    Navigator.pop(context);
+                    _showCouponSheet();
+                  },
+                  onCharges: () {
+                    Navigator.pop(context);
+                    _showSelectChargeSheet();
+                  },
+                  onTips: () {},
                 ),
               ),
             ],
@@ -1823,204 +1916,91 @@ class _OrderSidebarState extends State<OrderSidebar> {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return SingleChildScrollView(
-              child: Center(
-                child: Column(
-                  children: [
-                    /// HEADER
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                        const Text(
+                          "SELECT CHARGE",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  if (_chargeTypes.any((charge) => charge['active'] == true))
                     Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Center(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              "SELECT CHARGE",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.close),
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const Divider(height: 1),
-
-                    /// ACTIVE CHARGES LIST
-                    if (_chargeTypes.any((charge) => charge['active'] == true))
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Active Charges:",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                color: Color(0xff7CD23D),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            ..._chargeTypes
-                                .where((charge) => charge['active'] == true)
-                                .map((charge) {
-                                  return Card(
-                                    color: Colors.grey.shade100,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            "${charge['name']}: ${charge['value']}\${charge['type'] == 'percentage' ? '%' : 'Rs'}",
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(
-                                              Icons.delete,
-                                              size: 16,
-                                              color: Colors.red,
-                                            ),
-                                            onPressed: () {
-                                              setState(() {
-                                                charge['active'] = false;
-                                                if (charge['type'] ==
-                                                    'percentage') {
-                                                  // For percentage, we'll recalculate the total
-                                                  _packageCharges =
-                                                      _packageCharges -
-                                                      (widget.items.fold<
-                                                            double
-                                                          >(
-                                                            0,
-                                                            (
-                                                              double sum,
-                                                              OrderItem item,
-                                                            ) =>
-                                                                sum +
-                                                                (item.price *
-                                                                    item.quantity),
-                                                          ) *
-                                                          charge['value'] /
-                                                          100);
-                                                } else {
-                                                  _packageCharges -=
-                                                      charge['value'];
-                                                }
-                                              });
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                }),
-                          ],
-                        ),
-                      ),
-
-                    /// LIST
-                    ...charges.map(
-                      (charge) => ListTile(
-                        title: Text(charge),
-                        onTap: () {
-                          Navigator.pop(context);
-                          _showChargeAmountSheet(charge);
-                        },
-                      ),
-                    ),
-
-                    /// CUSTOM CHARGES FROM THE LIST
-                    if (_chargeTypes.any(
-                      (charge) => !charges.contains(charge['name']),
-                    ))
-                      ..._chargeTypes
-                          .where((charge) => !charges.contains(charge['name']))
-                          .map(
-                            (charge) => ListTile(
-                              title: Text(charge['name']),
-                              subtitle: Text(
-                                "${charge['value']}\${charge['type'] == 'percentage' ? '%' : 'Rs'}",
-                              ),
-                              trailing: Checkbox(
-                                value: charge['active'],
-                                onChanged: (value) {
-                                  setModalState(() {
-                                    charge['active'] = value!;
-                                  });
-                                  setState(() {
-                                    if (value!) {
-                                      if (charge['type'] == 'percentage') {
-                                        _packageCharges +=
-                                            (widget.items.fold<double>(
-                                              0,
-                                              (double sum, OrderItem item) =>
-                                                  sum +
-                                                  (item.price * item.quantity),
-                                            ) *
-                                            charge['value'] /
-                                            100);
-                                      } else {
-                                        _packageCharges += charge['value'];
-                                      }
-                                    } else {
-                                      if (charge['type'] == 'percentage') {
-                                        // For percentage, we'll recalculate the total
-                                        _packageCharges =
-                                            _packageCharges -
-                                            (widget.items.fold<double>(
-                                                  0,
-                                                  (
-                                                    double sum,
-                                                    OrderItem item,
-                                                  ) =>
-                                                      sum +
-                                                      (item.price *
-                                                          item.quantity),
-                                                ) *
-                                                charge['value'] /
-                                                100);
-                                      } else {
-                                        _packageCharges -= charge['value'];
-                                      }
-                                    }
-                                  });
-                                },
-                              ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Active Charges:",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: Color(0xff7CD23D),
                             ),
                           ),
-
-                    /// APPLY BUTTON
-                    // Padding(
-                    //   padding: const EdgeInsets.all(16),
-                    //   child: ElevatedButton(
-                    //     onPressed: () {
-                    //       Navigator.pop(context);
-                    //     },
-                    //     style: ElevatedButton.styleFrom(
-                    //       backgroundColor: const Color(0xff7CD23D),
-                    //       foregroundColor: Colors.white,
-                    //       padding: const EdgeInsets.symmetric(
-                    //         vertical: 12,
-                    //         horizontal: 32,
-                    //       ),
-                    //     ),
-                    //     child: const Text("APPLY CHARGES"),
-                    //   ),
-                    // ),
-                  ],
-                ),
+                          ..._chargeTypes
+                              .where((charge) => charge['active'] == true)
+                              .map((charge) {
+                                return ListTile(
+                                  title: Text(
+                                    "${charge['name']}: ${charge['value']}${charge['type'] == 'percentage' ? '%' : 'Rs'}",
+                                  ),
+                                  trailing: IconButton(
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      color: Colors.red,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        charge['active'] = false;
+                                        double val = charge['value'];
+                                        if (charge['type'] == 'percentage') {
+                                          _packageCharges -=
+                                              (widget.items.fold<double>(
+                                                0,
+                                                (sum, item) =>
+                                                    sum +
+                                                    (item.price *
+                                                        item.quantity),
+                                              ) *
+                                              val /
+                                              100);
+                                        } else {
+                                          _packageCharges -= val;
+                                        }
+                                      });
+                                      setModalState(() {});
+                                    },
+                                  ),
+                                );
+                              }),
+                        ],
+                      ),
+                    ),
+                  ...charges.map(
+                    (charge) => ListTile(
+                      title: Text(charge),
+                      onTap: () {
+                        Navigator.pop(context);
+                        _showChargeAmountSheet(charge);
+                      },
+                    ),
+                  ),
+                ],
               ),
             );
           },
@@ -2036,49 +2016,42 @@ class _OrderSidebarState extends State<OrderSidebar> {
       (double sum, OrderItem item) => sum + (item.price * item.quantity),
     );
     final tax = subtotal * 0.13;
+    final discountAmount = (_isDiscountPercentage == true)
+        ? (subtotal * _orderDiscount / 100)
+        : _orderDiscount;
     final total =
-        subtotal + tax - _orderDiscount + _deliveryCharges + _packageCharges;
+        subtotal +
+        tax -
+        discountAmount +
+        _deliveryCharges +
+        _packageCharges +
+        _orderTip;
     bool customerSelected = widget.customerName.isNotEmpty;
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           // Top Header
           IntrinsicHeight(
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.menu, color: Colors.black),
+                const Icon(Icons.menu, color: Colors.black, size: 26),
                 VerticalDivider(
                   color: Colors.grey[300],
                   thickness: 1,
                   indent: 5,
                   endIndent: 5,
                 ),
-                TextButton(
+                IconButton(
                   onPressed: widget.onCustomerSelect,
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.person,
-                        color: customerSelected
-                            ? Color(0xff7CD23D)
-                            : Colors.black,
-                      ),
-                      Text(
-                        "Customer",
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: customerSelected
-                              ? Color(0xff7CD23D)
-                              : Colors.black,
-                          fontFamily: 'SanFrancisco',
-                        ),
-                      ),
-                    ],
+                  icon: Icon(
+                    Icons.person_add_alt_1_sharp,
+                    color: customerSelected
+                        ? const Color(0xff7CD23D)
+                        : Colors.black,
+                    size: 26,
                   ),
                 ),
                 VerticalDivider(
@@ -2087,21 +2060,9 @@ class _OrderSidebarState extends State<OrderSidebar> {
                   indent: 5,
                   endIndent: 5,
                 ),
-                TextButton(
+                IconButton(
                   onPressed: () {},
-                  child: Column(
-                    children: [
-                      Icon(Icons.drafts, color: Colors.black),
-                      Text(
-                        "Draft",
-                        style: TextStyle(
-                          fontFamily: 'SanFrancisco',
-                          fontSize: 10,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ],
-                  ),
+                  icon: const Icon(Icons.drafts, color: Colors.black, size: 26),
                 ),
                 VerticalDivider(
                   color: Colors.grey[300],
@@ -2112,52 +2073,41 @@ class _OrderSidebarState extends State<OrderSidebar> {
               ],
             ),
           ),
-          // SizedBox(height: 8),
-          Divider(color: const Color(0xFFE2E8F0)),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                widget.customerName.isEmpty
-                    ? ""
-                    : "${widget.customerName} | ${widget.customerPhone}",
-                style: TextStyle(
-                  fontSize: 13,
-                  color: widget.customerName.isEmpty
-                      ? Colors.grey
-                      : Color(0xFF1E293B),
-                  fontFamily: 'SanFrancisco',
+          const Divider(color: Color(0xFFE2E8F0)),
+          // Customer Info
+          if (customerSelected) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    "${widget.customerName} | ${widget.customerPhone}",
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF1E293B),
+                      fontFamily: 'SanFrancisco',
+                    ),
+                  ),
                 ),
-              ),
-              if (widget.customerName.isNotEmpty)
                 IconButton(
                   onPressed: widget.onCustomerClear,
-                  icon: const Icon(Icons.clear),
-                  color: Colors.red,
-                  iconSize: 20,
+                  icon: const Icon(Icons.clear, color: Colors.red, size: 20),
                 ),
-            ],
-          ),
-          if (widget.customerAddress.isNotEmpty)
-            Text(
-              "Location: ${widget.customerAddress}",
-              style: TextStyle(
-                fontSize: 13,
-                color: Color(0xFF1E293B),
-                fontFamily: 'SanFrancisco',
-              ),
+              ],
             ),
-          if (widget.customerBalance.isNotEmpty)
-            Text(
-              "Outstanding Balance: Rs ${widget.customerBalance}",
-              style: TextStyle(
-                fontSize: 13,
-                color: Color(0xFF1E293B),
-                fontFamily: 'SanFrancisco',
+            if (widget.customerAddress.isNotEmpty)
+              Text(
+                "Location: ${widget.customerAddress}",
+                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
               ),
-            ),
-          if (widget.customerName.isNotEmpty)
-            Divider(thickness: 1, color: const Color(0xFFE2E8F0)),
+            if (widget.customerBalance.isNotEmpty)
+              Text(
+                "Balance: Rs ${widget.customerBalance}",
+                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              ),
+            const Divider(color: Color(0xFFE2E8F0)),
+          ],
+
           // Item List
           Expanded(
             child: widget.items.isEmpty
@@ -2176,152 +2126,115 @@ class _OrderSidebarState extends State<OrderSidebar> {
                           style: TextStyle(
                             color: Colors.grey[400],
                             fontSize: 16,
-                            fontFamily: 'SanFrancisco',
                           ),
                         ),
                       ],
                     ),
                   )
                 : ListView.builder(
-                    // padding: const EdgeInsets.symmetric(vertical: 4),
                     itemCount: widget.items.length,
                     itemBuilder: (context, index) {
-                      return OrderItemTile(
-                        item: widget.items[index],
-                        onRemove: () => widget.onRemove(index),
-                        onQuantityChange: (newQty) =>
-                            widget.onQuantityChange(index, newQty),
-                        onTap: () => _showEditItemDialog(context, index),
-                        isdiscount: '${widget.items[index].discount}' != '0',
+                      final item = widget.items[index];
+                      final isHighlighted = _highlightedItemName == item.name;
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        decoration: BoxDecoration(
+                          color: isHighlighted
+                              ? const Color(0xff7CD23D).withOpacity(0.1)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: OrderItemTile(
+                          item: item,
+                          onRemove: () => widget.onRemove(index),
+                          onQuantityChange: (newQty) =>
+                              widget.onQuantityChange(index, newQty),
+                          onTap: () => _showEditItemDialog(context, index),
+                          isdiscount: (item.discount ?? 0) > 0,
+                        ),
                       );
                     },
                   ),
           ),
+
           // Summary Section
           Container(
-            width: double.infinity,
-            margin: const EdgeInsets.only(top: 16),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: const Color(0xFFF8FAFC),
               border: Border(top: BorderSide(color: Colors.grey[200]!)),
             ),
             child: Column(
-              spacing: 2,
               children: [
-                if (showSummary) ...[
+                if (showSummary == true) ...[
                   _summaryRow(
                     "Subtotal",
                     "Rs ${subtotal.toStringAsFixed(2)}",
-                    true,
+                    false,
                   ),
-                  if (_orderDiscount > 0)
+                  if (discountAmount > 0)
                     _summaryRow(
                       "Discount",
-                      "- Rs ${_orderDiscount.toStringAsFixed(2)}",
-                      true,
+                      "- Rs ${discountAmount.toStringAsFixed(2)}",
+                      false,
                       color: Colors.red,
                     ),
                   _summaryRow(
                     "Tax (13%)",
                     "Rs ${tax.toStringAsFixed(2)}",
-                    true,
+                    false,
                   ),
-
                   if (_deliveryCharges > 0)
                     _summaryRow(
-                      "Delivery Charges",
+                      "Delivery",
                       "Rs ${_deliveryCharges.toStringAsFixed(2)}",
-                      true,
+                      false,
                     ),
                   if (_packageCharges > 0)
                     _summaryRow(
-                      "Package Charges",
+                      "Charges",
                       "Rs ${_packageCharges.toStringAsFixed(2)}",
-                      true,
+                      false,
                     ),
+                  if (_orderTip > 0)
+                    _summaryRow(
+                      "Tip",
+                      "Rs ${_orderTip.toStringAsFixed(2)}",
+                      false,
+                    ),
+                  const SizedBox(height: 8),
 
+                  // Quick Actions
                   Container(
-                    height: 35,
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.symmetric(vertical: 4),
                     decoration: BoxDecoration(
-                      color: Color(0xff7CD23D).withValues(alpha: 0.1),
+                      color: const Color(0xff7CD23D).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Apply",
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontFamily: 'SanFrancisco',
-                              ),
-                            ),
-                            Icon(
-                              Icons.keyboard_double_arrow_right_rounded,
-                              size: 20,
-                            ),
-                          ],
-                        ),
-                        TextButton(
-                          onPressed: _showDiscountSheet,
-                          child: Text(
-                            "Discount",
-                            style: TextStyle(
-                              fontWeight: FontWeight.normal,
-                              fontSize: 14,
-                              fontFamily: 'SanFrancisco',
-                            ),
+                        Text(
+                          "Apply",
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 16,
+                            fontWeight: FontWeight.normal,
+                            fontFamily: 'sanfrancisco',
                           ),
                         ),
-                        TextButton(
-                          onPressed: _showCouponSheet,
-                          child: Text(
-                            "Coupon",
-                            style: TextStyle(
-                              fontWeight: FontWeight.normal,
-                              fontSize: 12,
-                              fontFamily: 'SanFrancisco',
-                            ),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            _showSelectChargeSheet();
-                          },
-                          child: Text(
-                            "Charges",
-                            style: TextStyle(
-                              fontWeight: FontWeight.normal,
-                              fontSize: 12,
-                              fontFamily: 'SanFrancisco',
-                            ),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            _showAddtipedChargeSheet();
-                          },
-                          child: Text(
-                            "Tips",
-                            style: TextStyle(
-                              fontWeight: FontWeight.normal,
-                              fontSize: 12,
-                              fontFamily: 'SanFrancisco',
-                            ),
-                          ),
-                        ),
+                        Icon(Icons.keyboard_double_arrow_right_outlined),
+                        _quickActionButton("Discount", _showDiscountSheet),
+                        _quickActionButton("Coupon", _showCouponSheet),
+                        _quickActionButton("Charges", _showSelectChargeSheet),
+                        _quickActionButton("Tips", _showAddtipedChargeSheet),
                       ],
                     ),
                   ),
-                  // Divider(color: Colors.grey[300]),
                   const SizedBox(height: 8),
                 ],
+
+                // Total Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -2330,74 +2243,61 @@ class _OrderSidebarState extends State<OrderSidebar> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E293B),
-                        fontFamily: 'SanFrancisco',
                       ),
                     ),
                     IconButton(
-                      onPressed: () {
-                        setState(() {
-                          showSummary = !showSummary;
-                        });
-                      },
+                      onPressed: () =>
+                          setState(() => showSummary = !showSummary),
                       icon: Icon(
-                        showSummary
+                        (showSummary == true)
                             ? Icons.keyboard_arrow_down
                             : Icons.keyboard_arrow_up,
-                        color: const Color(0xFF64748B),
                       ),
-                      constraints: const BoxConstraints(),
                       padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                     ),
-                    SizedBox(
-                      width: 180,
-                      child: Text(
-                        "Rs ${total.toStringAsFixed(2)}",
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                          fontFamily: 'SanFrancisco',
-                        ),
+                    Text(
+                      "Rs ${total.toStringAsFixed(2)}",
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
                 ),
+
+                // Footer Info
                 Row(
                   children: [
-                    const SizedBox(width: 6),
                     Text(
-                      "${widget.items.length} items | ${widget.items.fold<int>(0, (int sum, OrderItem item) => sum + item.quantity)} units",
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontFamily: 'SanFrancisco',
-                      ),
+                      "${widget.items.length} items | ${widget.items.fold<int>(0, (sum, item) => sum + item.quantity)} units",
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
-                    // Show count of items with discount
-                    if (widget.items
-                        .where((item) => (item.discount ?? 0) > 0)
-                        .isNotEmpty)
-                      Text(
-                        " | ${widget.items.where((item) => (item.discount ?? 0) > 0).length} discount",
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontFamily: 'SanFrancisco',
-                        ),
-                      ),
-                    if (widget.items.where((item) => (item.isFree)).isNotEmpty)
-                      Text(
-                        " | ${widget.items.where((item) => (item.isFree)).length} Fere",
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontFamily: 'SanFrancisco',
-                        ),
-                      ),
                   ],
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _quickActionButton(String label, VoidCallback onTap) {
+    return TextButton(
+      onPressed: onTap,
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Color(0xff7CD23D),
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

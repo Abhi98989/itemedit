@@ -34,39 +34,15 @@ class _ProductCardState extends State<ProductCard> {
     } else {
       widget.onTap(1);
     }
-  }
-
+  } 
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
-      // onEnter: (_) => setState(() => isHovered = true),
-      // onExit: (_) => setState(() => isHovered = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        // ignore: deprecated_member_use
-        // transform: Matrix4.identity()..scale(isHovered ? 1.02 : 1.0),
         child: InkWell(
           onTap: _handleTap,
           child: Container(
-            // decoration: BoxDecoration(
-            //   color: Colors.white,
-            //   borderRadius: BorderRadius.circular(2),
-            // border: Border.all(
-            //   color: isHovered
-            //       ? const Color(0xff7CD23D)
-            //       : const Color(0xFFE2E8F0),
-            //   width: isHovered ? 2 : 1,
-            // ),
-            // boxShadow: isHovered
-            //     ? [
-            //         BoxShadow(
-            //           color: const Color(0xff7CD23D).withValues(alpha: 0.1),
-            //           blurRadius: 12,
-            //           offset: const Offset(0, 4),
-            //         ),
-            //       ]
-            //     : [],
-            // ),
             child: widget.isGridView
                 ? _buildGridContent()
                 : _buildListContent(),
@@ -85,13 +61,6 @@ class _ProductCardState extends State<ProductCard> {
           border: Border(
             bottom: BorderSide(color: const Color(0xff7CD23D), width: 2),
           ),
-          // boxShadow: const [
-          //   BoxShadow(
-          //     color: Color(0xFFE2E8F0),
-          //     blurRadius: 12,
-          //     offset: Offset(0, 4),
-          //   ),
-          // ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -177,11 +146,6 @@ class _ProductCardState extends State<ProductCard> {
   Widget _buildListContent() {
     return Row(
       children: [
-        // ClipRRect(
-        //   borderRadius: BorderRadius.circular(8),
-        //   child: _buildImage(height: 60, width: 60),
-        // ),
-        // const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
