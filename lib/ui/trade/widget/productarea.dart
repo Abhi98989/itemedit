@@ -4,7 +4,7 @@ import 'package:itemedit/ui/trade/widget/productcard.dart' show ProductCard;
 import '../model/product_class.dart';
 
 class MainProductArea extends StatefulWidget {
-  final Function(Product, {int quantity}) onProductTap;
+  final Function(Product, {double quantity}) onProductTap;
   final VoidCallback onPaymentClick;
   final VoidCallback onSaveDraft;
   final VoidCallback onAddClick;

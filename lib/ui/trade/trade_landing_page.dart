@@ -16,7 +16,7 @@ class _POSLandingPageState extends State<POSLandingPage> {
   final List<OrderItem> items = [];
   bool isPaymentMode = false;
   String enteredAmount = "";
-  String selectedPayment = "Cash";
+  String selectedPayment = "";
   // Customer Data
   Customer? selectedCustomer;
   bool isCustomerSelected = false;
@@ -369,16 +369,16 @@ class _POSLandingPageState extends State<POSLandingPage> {
     });
   }
 
-  void addItem(Product product, {int quantity = 1}) {
+  void addItem(Product product, {double quantity = 1}) {
     setState(() {
-      final index = items.indexWhere((item) => item.name == product.name);
-      if (index != -1) {
-        // Item exists, update quantity and move to top
-        items[index].quantity += quantity;
-        final item = items.removeAt(index);
-        items.insert(0, item);
+      final existingIndex = items.indexWhere(
+        (item) => item.name == product.name,
+      );
+      if (existingIndex != -1) {
+        items[existingIndex].quantity += quantity;
+        // The original logic to move to top was removed in the provided diff,
+        // so I'm keeping the new simplified logic.
       } else {
-        // New item, add to top
         items.insert(
           0,
           OrderItem(
@@ -430,12 +430,16 @@ class _POSLandingPageState extends State<POSLandingPage> {
                     items.removeAt(index);
                   });
                 },
-                onQuantityChange: (index, newQty) {
+                onQuantityChange: (int index, double newQty) {
                   setState(() {
-                    items[index].quantity = newQty;
-                    // Move the updated item to the top
-                    final item = items.removeAt(index);
-                    items.insert(0, item);
+                    if (newQty <= 0) {
+                      items.removeAt(index);
+                    } else {
+                      items[index].quantity = newQty;
+                      // Move the updated item to the top
+                      final item = items.removeAt(index);
+                      items.insert(0, item);
+                    }
                   });
                 },
                 onCustomerSelect: _showCustomerSelectionDialog,
@@ -534,37 +538,151 @@ class _POSLandingPageState extends State<POSLandingPage> {
                         );
                         return;
                       }
-                      // Logic to save draft
-                      // For now, we'll just show a success message
+
+                      // Show Confirmation Dialog
                       showDialog(
                         context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Row(
-                            children: [
-                              Icon(Icons.save, color: Color(0xff7CD23D)),
-                              SizedBox(width: 10),
-                              Text(
-                                "Draft Saved",
-                                style: TextStyle(fontFamily: 'SanFrancisco'),
+                        barrierDismissible: false,
+                        builder: (context) {
+                          return BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                            child: Dialog(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(3),
                               ),
-                            ],
-                          ),
-                          content: Text(
-                            "Your draft with ${items.length} items has been saved successfully.",
-                            style: TextStyle(fontFamily: 'SanFrancisco'),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                                setState(() {
-                                  items.clear();
-                                });
-                              },
-                              child: const Text("OK"),
+                              child: Container(
+                                width: 360,
+                                padding: const EdgeInsets.all(20),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    /// ICON
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: const Color(
+                                          0xff7CD23D,
+                                        ).withValues(alpha: 0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.save_outlined,
+                                        size: 32,
+                                        color: Color(0xff7CD23D),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+
+                                    /// TITLE
+                                    const Text(
+                                      "Save as Draft?",
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'SanFrancisco',
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      "Are you sure you want to save this draft with ${items.length} items? This will clear your current cart.",
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Color(0xFF64748B),
+                                        fontFamily: 'SanFrancisco',
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+
+                                    /// ACTION BUTTONS
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: OutlinedButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context),
+                                            style: OutlinedButton.styleFrom(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 14,
+                                                  ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                            ),
+                                            child: const Text(
+                                              "Cancel",
+                                              style: TextStyle(
+                                                fontFamily: 'SanFrancisco',
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: ElevatedButton(
+                                            onPressed: () {
+                                              Navigator.pop(
+                                                context,
+                                              ); // Close confirmation
+
+                                              // Clear cart and show Snackbar
+                                              setState(() {
+                                                items.clear();
+                                              });
+
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                    "Draft saved successfully",
+                                                    style: TextStyle(
+                                                      fontFamily:
+                                                          'SanFrancisco',
+                                                    ),
+                                                  ),
+                                                  backgroundColor: Color(
+                                                    0xff7CD23D,
+                                                  ),
+                                                  duration: Duration(
+                                                    seconds: 2,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(
+                                                0xff7CD23D,
+                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 14,
+                                                  ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                            ),
+                                            child: const Text(
+                                              "Save Draft",
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                                fontFamily: 'SanFrancisco',
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       );
                     },
                     onAddClick: () {
@@ -640,7 +758,7 @@ class OrderSidebar extends StatefulWidget {
   final List<OrderItem> items;
   final bool isPaymentMode;
   final Function(int) onRemove;
-  final Function(int, int) onQuantityChange;
+  final Function(int, double) onQuantityChange;
   final String customerName;
   final String customerPhone;
   final String customerAddress;
@@ -712,7 +830,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
 
   void _showEditItemDialog(BuildContext context, int index) {
     final item = widget.items[index];
-    int tempQty = item.quantity;
+    double tempQty = item.quantity;
     String tempNote = item.note ?? "";
     double tempDiscount = item.discount ?? 0;
     bool tempIsFree = item.isFree;
@@ -789,7 +907,10 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                 ),
                               ),
                               onPressed: () {
-                                widget.onQuantityChange(index, tempQty);
+                                widget.onQuantityChange(
+                                  index,
+                                  tempQty.toDouble(),
+                                );
                                 setState(() {
                                   item.note = noteController.text;
                                   item.discount = tempDiscount;
@@ -843,7 +964,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                         fontWeight: FontWeight.bold,
                                       ),
                                       onChanged: (v) {
-                                        final q = int.tryParse(v);
+                                        final q = double.tryParse(v);
                                         if (q != null && q > 0) {
                                           setDialogState(() => tempQty = q);
                                         }
@@ -1313,7 +1434,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                   ),
                   // Right Keyboard
                   Container(
-                    width: 380,
+                    width: 350,
                     decoration: const BoxDecoration(
                       border: Border(left: BorderSide(color: Colors.black12)),
                     ),
@@ -1441,7 +1562,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                 ),
               ),
               Container(
-                width: 450,
+                width: 350,
                 decoration: const BoxDecoration(
                   border: Border(left: BorderSide(color: Colors.black12)),
                 ),
@@ -1602,7 +1723,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                     ),
                   ),
                   Container(
-                    width: 390,
+                    width: 350,
                     decoration: const BoxDecoration(
                       border: Border(left: BorderSide(color: Colors.black12)),
                     ),
@@ -1773,7 +1894,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                     ),
                   ),
                   Container(
-                    width: 390,
+                    width: 350,
                     decoration: const BoxDecoration(
                       border: Border(left: BorderSide(color: Colors.black12)),
                     ),
@@ -1940,7 +2061,6 @@ class _OrderSidebarState extends State<OrderSidebar> {
         _packageCharges +
         tipAmount;
     bool customerSelected = widget.customerName.isNotEmpty;
-
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
@@ -1950,7 +2070,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
           IntrinsicHeight(
             child: Row(
               children: [
-                const Icon(Icons.menu, color: Colors.black, size: 26),
+                const Icon(Icons.menu, color: Colors.grey, size: 26),
                 VerticalDivider(
                   color: Colors.grey[300],
                   thickness: 1,
@@ -1963,7 +2083,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                     Icons.person_add_alt_1_sharp,
                     color: customerSelected
                         ? const Color(0xff7CD23D)
-                        : Colors.black,
+                        : Colors.grey,
                     size: 26,
                   ),
                 ),
@@ -1975,7 +2095,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                 ),
                 IconButton(
                   onPressed: () {},
-                  icon: const Icon(Icons.drafts, color: Colors.black, size: 26),
+                  icon: const Icon(Icons.drafts, color: Colors.grey, size: 26),
                 ),
                 VerticalDivider(
                   color: Colors.grey[300],
@@ -1986,6 +2106,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
               ],
             ),
           ),
+          SizedBox(height: 8),
           const Divider(color: Color(0xFFE2E8F0)),
           // Customer Info
           if (customerSelected) ...[
@@ -2020,7 +2141,6 @@ class _OrderSidebarState extends State<OrderSidebar> {
               ),
             const Divider(color: Color(0xFFE2E8F0)),
           ],
-
           // Item List
           Expanded(
             child: widget.items.isEmpty
@@ -2060,7 +2180,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                         child: OrderItemTile(
                           item: item,
                           onRemove: () => widget.onRemove(index),
-                          onQuantityChange: (newQty) =>
+                          onQuantityChange: (double newQty) =>
                               widget.onQuantityChange(index, newQty),
                           onTap: () => _showEditItemDialog(context, index),
                           isdiscount: (item.discount ?? 0) > 0,
@@ -2137,7 +2257,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                           ),
                         ),
                         Icon(Icons.keyboard_double_arrow_right_outlined),
-                        _quickActionButton("Discount", _showDiscountSheet),
+                        _quickActionButton("Discount", _showDiscountSheet), 
                         _quickActionButton("Coupon", _showCouponSheet),
                         _quickActionButton("Charges", _showSelectChargeSheet),
                         _quickActionButton("Tips", _showAddtipedChargeSheet),
@@ -2183,7 +2303,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                 Row(
                   children: [
                     Text(
-                      "${widget.items.length} items | ${widget.items.fold<int>(0, (sum, item) => sum + item.quantity)} units",
+                      "${widget.items.length} items | ${widget.items.fold<double>(0, (double sum, OrderItem item) => sum + item.quantity).toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '')} units",
                       style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ],

@@ -7,6 +7,7 @@ class CustomKeyboard extends StatefulWidget {
   final VoidCallback? onCoupon;
   final VoidCallback? onCharges;
   final VoidCallback? onTips;
+
   const CustomKeyboard({
     required this.controller,
     required this.onClose,
@@ -16,6 +17,7 @@ class CustomKeyboard extends StatefulWidget {
     this.onTips,
     super.key,
   });
+
   @override
   _CustomKeyboardState createState() => _CustomKeyboardState();
 }
@@ -48,6 +50,7 @@ class _CustomKeyboardState extends State<CustomKeyboard> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Side Buttons (Navigation + Toggle)
           // if (widget.onDiscount != null ||
           //     widget.onCoupon != null ||
           //     widget.onCharges != null ||
@@ -68,13 +71,14 @@ class _CustomKeyboardState extends State<CustomKeyboard> {
           //           _buildSideNavButton("Tips", widget.onTips!),
           //         const Spacer(),
           //         _buildSideNavButton(
-          //           "Alpha",
+          //           "ABC",
           //           () => setState(() => isNumeric = false),
           //           isAction: true,
           //         ),
           //       ],
           //     ),
           //   ),
+
           // Numeric Grid + Actions
           Expanded(
             child: Row(
@@ -87,14 +91,27 @@ class _CustomKeyboardState extends State<CustomKeyboard> {
                       _buildNumRow(['7', '8', '9']),
                       _buildNumRow(['4', '5', '6']),
                       _buildNumRow(['1', '2', '3']),
-                      _buildNumRow(['.', '0', '00']),
+                      // Bottom row with wide 0 and dot
+                      SizedBox(
+                        height: 60,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 6.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildKeyButton("."),
+                              _buildKeyButton("0"),
+                              Expanded(flex: 3, child: _buildKeyButton("00")),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
                 const SizedBox(width: 8),
                 // Right Actions
                 Expanded(
-                  flex: 1,
                   child: Column(
                     children: [
                       Expanded(
@@ -114,7 +131,7 @@ class _CustomKeyboardState extends State<CustomKeyboard> {
                       ),
                       const SizedBox(height: 8),
                       Expanded(
-                        flex: 1,
+                        flex: 2,
                         child: _buildActionButton(
                           label: "Enter",
                           onTap: widget.onClose,
@@ -172,7 +189,7 @@ class _CustomKeyboardState extends State<CustomKeyboard> {
             TextButton(
               onPressed: () => setState(() => isNumeric = true),
               child: const Text(
-                "Num",
+                "123",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
@@ -202,7 +219,7 @@ class _CustomKeyboardState extends State<CustomKeyboard> {
               ),
             ),
             SizedBox(
-              width: 150,
+              width: 100,
               height: 45,
               child: ElevatedButton(
                 onPressed: () => _input(" "),
@@ -226,40 +243,42 @@ class _CustomKeyboardState extends State<CustomKeyboard> {
     );
   }
 
+  /// Helper for standard numeric keys
+  Widget _buildKeyButton(String key) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          elevation: 1,
+        ),
+        onPressed: () => _input(key),
+        child: Center(
+          child: Text(
+            key,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildNumRow(List<String> keys) {
     return SizedBox(
       height: 60,
+      width: double.infinity,
       child: Padding(
         padding: const EdgeInsets.only(bottom: 6.0),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: keys.map((key) {
-            return Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    elevation: 1,
-                  ),
-                  onPressed: () => _input(key),
-                  child: Center(
-                    child: Text(
-                      key,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
+          children: keys
+              .map((key) => Expanded(child: _buildKeyButton(key)))
+              .toList(),
         ),
       ),
     );
@@ -287,7 +306,7 @@ class _CustomKeyboardState extends State<CustomKeyboard> {
             : Text(
                 label!,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: textColor,
                 ),

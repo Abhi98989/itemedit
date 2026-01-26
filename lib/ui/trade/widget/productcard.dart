@@ -4,7 +4,7 @@ import 'weight_item_dialog.dart';
 
 class ProductCard extends StatefulWidget {
   final Product product;
-  final Function(int quantity) onTap;
+  final Function(double quantity) onTap;
   final bool isGridView;
   const ProductCard({
     super.key,
@@ -34,7 +34,8 @@ class _ProductCardState extends State<ProductCard> {
     } else {
       widget.onTap(1);
     }
-  } 
+  }
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(

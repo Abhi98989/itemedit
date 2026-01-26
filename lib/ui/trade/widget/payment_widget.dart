@@ -127,7 +127,6 @@ class _PaymentBodyState extends State<PaymentBody> {
   Widget _buildCreditSaleFrame() {
     final bool customerSelected =
         widget.customerName.isNotEmpty && widget.customerPhone.isNotEmpty;
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxWidth = constraints.maxWidth;
@@ -138,39 +137,7 @@ class _PaymentBodyState extends State<PaymentBody> {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        "Amount Received Rs",
-                        style: TextStyle(
-                          fontSize: maxWidth < 400 ? 14 : 16,
-                          fontWeight: FontWeight.w500,
-                          fontFamily: 'SanFrancisco',
-                        ),
-                      ),
-                    ),
-                    Row(
-                      spacing: 8,
-                      children: [
-                        Text(
-                          widget.total.toString(),
-                          style: TextStyle(
-                            fontSize: maxWidth < 400 ? 20 : 24,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'SanFrancisco',
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: double.infinity, child: Divider()),
+              const SizedBox(height: 8),
               // Customer Details Section
               GestureDetector(
                 onTap: () {
@@ -290,7 +257,7 @@ class _PaymentBodyState extends State<PaymentBody> {
                         controller: _refController,
                         focusNode: _refFocusNode,
                         decoration: const InputDecoration(
-                          labelText: "reference no",
+                          labelText: "Reference no",
                         ),
                       ),
                     ),
@@ -515,10 +482,11 @@ class _PaymentBodyState extends State<PaymentBody> {
   @override
   Widget build(BuildContext context) {
     // Update amount controller text when enteredAmount changes
-    if (_amount.text != widget.enteredAmount) {
+    if (widget.selectedPayment == "Cash" && widget.enteredAmount.isEmpty) {
+      _amount.text = widget.total.toStringAsFixed(2);
+    } else if (_amount.text != widget.enteredAmount) {
       _amount.text = widget.enteredAmount;
     }
-
     if (_isPaymentSuccess) {
       return _buildSuccessView();
     }
@@ -670,6 +638,13 @@ class _PaymentBodyState extends State<PaymentBody> {
                                     ),
                                   ),
                                   const SizedBox(height: 16),
+                                  _buildCommonAmountHeader(
+                                    constraints.maxWidth,
+                                  ),
+                                  const SizedBox(
+                                    width: double.infinity,
+                                    child: Divider(),
+                                  ),
                                   if (isCashSelected)
                                     Expanded(child: _buildCashSection()),
                                   if (isCardSelected)
@@ -699,16 +674,27 @@ class _PaymentBodyState extends State<PaymentBody> {
                                     ),
                                   ),
                                   const SizedBox(width: 16),
-                                  if (isCashSelected)
-                                    Expanded(child: _buildCashSection()),
-                                  if (isCardSelected)
-                                    Expanded(
-                                      flex: 2,
-                                      child: Container(
-                                        padding: const EdgeInsets.all(10),
-                                        child: _buildCreditSaleFrame(),
-                                      ),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        _buildCommonAmountHeader(
+                                          constraints.maxWidth - 191,
+                                        ),
+                                        const SizedBox(
+                                          width: double.infinity,
+                                          child: Divider(),
+                                        ),
+                                        if (isCashSelected) _buildCashSection(),
+                                        if (isCardSelected)
+                                          Container(
+                                            padding: const EdgeInsets.all(10),
+                                            child: _buildCreditSaleFrame(),
+                                          ),
+                                      ],
                                     ),
+                                  ),
                                 ],
                               ),
                       ],
@@ -735,54 +721,6 @@ class _PaymentBodyState extends State<PaymentBody> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Flexible(
-                    child: Text(
-                      "Amount Received Rs",
-                      style: TextStyle(
-                        fontSize: maxWidth < 400 ? 14 : 16,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'SanFrancisco',
-                      ),
-                    ),
-                  ),
-                  Row(
-                    spacing: 8,
-                    children: [
-                      SizedBox(
-                        width: maxWidth < 400 ? 120 : 200,
-                        child: TextField(
-                          controller: _amount,
-                          focusNode: _amountFocusNode2,
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            disabledBorder: InputBorder.none,
-                          ),
-                          textAlign: TextAlign.right,
-                          style: TextStyle(
-                            fontSize: maxWidth < 400 ? 20 : 24,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'SanFrancisco',
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        onTap: _onBackspace,
-                        child: const Icon(
-                          Icons.backspace,
-                          size: 21,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(width: double.infinity, child: Divider()),
               // Numpad
               Container(
                 width: double.infinity,
@@ -944,13 +882,12 @@ class _PaymentBodyState extends State<PaymentBody> {
       builder: (context, constraints) {
         final maxWidth = constraints.maxWidth;
         final containerWidth = maxWidth < 600 ? maxWidth * 0.9 : 500.0;
-
         return Center(
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Container(
               width: containerWidth,
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
@@ -974,7 +911,6 @@ class _PaymentBodyState extends State<PaymentBody> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
                     // Invoice Info
                     _infoRow(
                       "Invoice no: 000000999888999",
@@ -1024,25 +960,27 @@ class _PaymentBodyState extends State<PaymentBody> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "Total paid",
-                                style: TextStyle(
-                                  color: Color(0xFF64748B),
-                                  fontFamily: 'SanFrancisco',
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Total paid",
+                                  style: TextStyle(
+                                    color: Color(0xFF64748B),
+                                    fontFamily: 'SanFrancisco',
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                "Rs ${widget.total.toStringAsFixed(2)}",
-                                style: const TextStyle(
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'SanFrancisco',
+                                Text(
+                                  "Rs ${widget.total.toStringAsFixed(2)}",
+                                  style: const TextStyle(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'SanFrancisco',
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                           const VerticalDivider(
                             color: Colors.grey,
@@ -1050,25 +988,29 @@ class _PaymentBodyState extends State<PaymentBody> {
                             indent: 5,
                             endIndent: 5,
                           ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              const Text(
-                                "Change",
-                                style: TextStyle(
-                                  fontFamily: 'SanFrancisco',
-                                  color: Color(0xFF64748B),
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Change",
+                                  style: TextStyle(
+                                    fontFamily: 'SanFrancisco',
+                                    color: Color(0xFF64748B),
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                _calculateChange(),
-                                style: const TextStyle(
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'SanFrancisco',
+                                Text(
+                                  _calculateChange(),
+                                  style: const TextStyle(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'SanFrancisco',
+                                  ),
+                                  maxLines: 5,
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -1314,6 +1256,73 @@ class _PaymentBodyState extends State<PaymentBody> {
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildCommonAmountHeader(double maxWidth) {
+    bool isCash = widget.selectedPayment == "Cash";
+
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(
+              child: Text(
+                "Amount Received Rs",
+                style: TextStyle(
+                  fontSize: maxWidth < 400 ? 14 : 16,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'SanFrancisco',
+                ),
+              ),
+            ),
+            if (isCash)
+              Row(
+                spacing: 8,
+                children: [
+                  SizedBox(
+                    width: maxWidth < 400 ? 120 : 200,
+                    child: TextField(
+                      controller: _amount,
+                      focusNode: _amountFocusNode2,
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                      ),
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        fontSize: maxWidth < 400 ? 20 : 24,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'SanFrancisco',
+                      ),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: _onBackspace,
+                    child: const Icon(
+                      Icons.backspace,
+                      size: 21,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              )
+            else
+              Text(
+                "Rs ${widget.total.toStringAsFixed(2)}",
+                style: TextStyle(
+                  fontSize: maxWidth < 400 ? 20 : 24,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF1E293B),
+                  fontFamily: 'SanFrancisco',
+                ),
+              ),
+          ],
+        ),
+      ],
     );
   }
 

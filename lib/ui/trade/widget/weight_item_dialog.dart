@@ -1,11 +1,11 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import '../model/product_class.dart';
+import 'custom_num.dart';
 
 class WeightItemDialog extends StatefulWidget {
   final Product product;
-  final Function(int quantity) onConfirm;
+  final Function(double quantity) onConfirm;
   const WeightItemDialog({
     super.key,
     required this.product,
@@ -16,43 +16,45 @@ class WeightItemDialog extends StatefulWidget {
 }
 
 class _WeightItemDialogState extends State<WeightItemDialog> {
-  String _quantity = "";
-  TextEditingController textEditingController = TextEditingController();
-  void _onKeyTap(String value) {
-    setState(() {
-      if (_quantity == "0") {
-        _quantity = value;
-      } else {
-        _quantity += value;
-      }
+  late TextEditingController textEditingController;
+
+  @override
+  void initState() {
+    super.initState();
+    textEditingController = TextEditingController();
+    // Rebuild to update amount preview when text changes
+    textEditingController.addListener(() {
+      if (mounted) setState(() {});
     });
   }
 
-  void _onBackspace() {
-    setState(() {
-      _quantity = "0";
-    });
+  @override
+  void dispose() {
+    textEditingController.dispose();
+    super.dispose();
   }
 
   void _onConfirm() {
-    final qty = double.tryParse(_quantity) ?? 0;
+    final qtyText = textEditingController.text;
+    final qty = double.tryParse(qtyText) ?? 0;
 
     if (qty > 0) {
-      widget.onConfirm(double.parse(_quantity).toInt());
+      widget.onConfirm(qty);
       Navigator.pop(context);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final qty = double.tryParse(_quantity) ?? 0;
+    final qty = double.tryParse(textEditingController.text) ?? 0;
     final amount = widget.product.price * qty;
+
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
       child: Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
         child: Container(
-          width: 350,
+          width: 390,
           padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -64,7 +66,9 @@ class _WeightItemDialogState extends State<WeightItemDialog> {
                 children: [
                   CloseButton(
                     onPressed: () => Navigator.pop(context),
-                    style: ButtonStyle(iconSize: WidgetStatePropertyAll(20)),
+                    style: const ButtonStyle(
+                      iconSize: WidgetStatePropertyAll(20),
+                    ),
                   ),
                   Column(
                     mainAxisAlignment: MainAxisAlignment.start,
@@ -78,14 +82,6 @@ class _WeightItemDialogState extends State<WeightItemDialog> {
                           fontFamily: 'SanFrancisco',
                         ),
                       ),
-                      // Text(
-                      //   "Rs ${widget.product.price} / kg",
-                      //   style: const TextStyle(
-                      //     fontSize: 16,
-                      //     color: Colors.black,
-                      //     fontFamily: 'SanFrancisco',
-                      //   ),
-                      // ),
                     ],
                   ),
                 ],
@@ -109,28 +105,29 @@ class _WeightItemDialogState extends State<WeightItemDialog> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // TextField(
-                    //   controller: textEditingController,
-                    //   onChanged: (value) => _onKeyTap(value),
-                    //   enabled: false,
-                    //   style: const TextStyle(
-                    //     fontSize: 24,
-                    //     fontWeight: FontWeight.bold,
-                    //     fontFamily: 'SanFrancisco',
-                    //   ),
-                    // ),
                     Text(
-                      _quantity,
+                      textEditingController.text.isEmpty
+                          ? "0"
+                          : textEditingController.text,
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         fontFamily: 'SanFrancisco',
                       ),
                     ),
-                    InkWell(
-                      onTap: _onBackspace,
-                      child: const Icon(Icons.backspace_outlined),
-                    ),
+                    // InkWell(
+                    //   onTap: () {
+                    //     if (textEditingController.text.isNotEmpty) {
+                    //       textEditingController.text = textEditingController
+                    //           .text
+                    //           .substring(
+                    //             0,
+                    //             textEditingController.text.length - 1,
+                    //           );
+                    //     }
+                    //   },
+                    //   child: const Icon(Icons.backspace_outlined),
+                    // ),
                   ],
                 ),
               ),
@@ -144,90 +141,13 @@ class _WeightItemDialogState extends State<WeightItemDialog> {
                 ),
               ),
               const SizedBox(height: 20),
-              _buildKeypad(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildKeypad() {
-    return Column(
-      children: [
-        Row(
-          children: [
-            _keypadButton("1"),
-            _keypadButton("2"),
-            _keypadButton("3"),
-          ],
-        ),
-        Row(
-          children: [
-            _keypadButton("4"),
-            _keypadButton("5"),
-            _keypadButton("6"),
-          ],
-        ),
-        Row(
-          children: [
-            _keypadButton("7"),
-            _keypadButton("8"),
-            _keypadButton("9"),
-          ],
-        ),
-        Row(
-          children: [
-            _keypadButton("."),
-            _keypadButton("0"),
-            Expanded(
-              child: InkWell(
-                onTap: _onConfirm,
-                child: Container(
-                  height: 60,
-                  margin: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.green, // OK button color
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  alignment: Alignment.center,
-                  child: const Text(
-                    "OK",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      fontFamily: 'SanFrancisco',
-                    ),
-                  ),
-                ),
+              // Use the shared CustomKeyboard
+              CustomKeyboard(
+                controller: textEditingController,
+                onClose: _onConfirm,
               ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _keypadButton(String label) {
-    return Expanded(
-      child: InkWell(
-        onTap: () => _onKeyTap(label),
-        child: Container(
-          height: 60,
-          margin: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w500,
-              fontFamily: 'SanFrancisco',
-            ),
+            ],
           ),
         ),
       ),

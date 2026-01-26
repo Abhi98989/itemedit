@@ -4,7 +4,7 @@ import 'package:itemedit/ui/trade/model/product_class.dart';
 class OrderItemTile extends StatelessWidget {
   final OrderItem item;
   final VoidCallback onRemove;
-  final Function(int) onQuantityChange;
+  final Function(double) onQuantityChange;
   final VoidCallback? onTap;
   final bool isdiscount;
   const OrderItemTile({
@@ -46,7 +46,7 @@ class OrderItemTile extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                               Text(
-                                " x ${item.quantity}",
+                                " x ${item.quantity % 1 == 0 ? item.quantity.toInt().toString() : item.quantity.toString()}",
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontFamily: 'SanFrancisco',

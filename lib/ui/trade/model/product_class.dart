@@ -230,7 +230,7 @@ final List<Product> products = [
 
 class OrderItem {
   String name;
-  int quantity;
+  double quantity;
   double price;
   String category;
   String? note;
@@ -247,11 +247,11 @@ class OrderItem {
   });
   factory OrderItem.fromJson(Map<String, dynamic> json) => OrderItem(
     name: json["name"],
-    quantity: json["quantity"],
-    price: json["price"],
+    quantity: json["quantity"].toDouble(),
+    price: json["price"].toDouble(),
     category: json["category"],
     note: json["note"],
-    discount: json["discount"],
+    discount: json["discount"]?.toDouble(),
     isFree: json["isFree"],
   );
 
@@ -278,6 +278,7 @@ final List<OrderItem> orderItems = <OrderItem>[
   OrderItem(name: "Coke", quantity: 1, price: 80, category: "Beverages"),
   OrderItem(name: "Ice Cream", quantity: 1, price: 150, category: "Dessert"),
 ];
+
 //customer
 class Customer {
   String name;
@@ -291,6 +292,7 @@ class Customer {
     required this.outstandingbalance,
   });
 }
+
 final List<Customer> customers = <Customer>[
   Customer(
     name: "John Doe",
