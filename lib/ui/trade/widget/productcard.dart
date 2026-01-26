@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
+import '../model/category_model.dart';
 import '../model/product_class.dart';
 import 'weight_item_dialog.dart';
 
 class ProductCard extends StatefulWidget {
   final Product product;
   final Function(double quantity) onTap;
+  final Category? category;
   final bool isGridView;
   const ProductCard({
     super.key,
     required this.product,
     required this.onTap,
     this.isGridView = true,
+    this.category,
   });
   @override
   State<ProductCard> createState() => _ProductCardState();
@@ -43,11 +46,7 @@ class _ProductCardState extends State<ProductCard> {
         duration: const Duration(milliseconds: 200),
         child: InkWell(
           onTap: _handleTap,
-          child: Container(
-            child: widget.isGridView
-                ? _buildGridContent()
-                : _buildListContent(),
-          ),
+          child: widget.isGridView ? _buildGridContent() : _buildListContent(),
         ),
       ),
     );
@@ -84,7 +83,7 @@ class _ProductCardState extends State<ProductCard> {
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: Color(0xff7CD23D),
+                color: Colors.black,
                 fontFamily: 'SanFrancisco',
               ),
             ),
@@ -148,43 +147,75 @@ class _ProductCardState extends State<ProductCard> {
     return Row(
       children: [
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                widget.product.name,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF1E293B),
-                  fontFamily: 'SanFrancisco',
+          child: Container(
+            height: 80,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(3),
+              border: Border.all(color: Colors.grey, width: 0.1),
+              boxShadow: [
+                BoxShadow(
+                  color: widget.category?.color ?? Colors.transparent,
+                  offset: const Offset(-3.0, 1.0),
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        widget.product.name,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1E293B),
+                          fontFamily: 'SanFrancisco',
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (widget.product.sku != null)
+                        Text(
+                          "SKU: ${widget.product.sku ?? ""} ",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontFamily: 'SanFrancisco',
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      if (widget.product.description != null)
+                        Text(
+                          widget.product.description ?? "",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontFamily: 'SanFrancisco',
+                            color: Colors.grey[500],
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
+                  Text(
+                    "Rs ${widget.product.price ?? ""}",
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                      fontFamily: 'SanFrancisco',
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                widget.product.category,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontFamily: 'SanFrancisco',
-                  color: Colors.grey[500],
-                ),
-              ),
-            ],
+            ),
           ),
         ),
-        Text(
-          "Rs ${widget.product.price}",
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Color(0xff7CD23D),
-            fontFamily: 'SanFrancisco',
-          ),
-        ),
-        const SizedBox(width: 8),
       ],
     );
   }

@@ -26,6 +26,111 @@ class _POSLandingPageState extends State<POSLandingPage> {
   String customerPan = "";
   String invoiceNumber = "";
   String customerBalance = "";
+  String tipn = "";
+
+  void _showAddCustomerDialog(
+    BuildContext context,
+    StateSetter setSelectionState,
+  ) {
+    final nameController = TextEditingController();
+    final phoneController = TextEditingController();
+    final addressController = TextEditingController();
+    final tipnController = TextEditingController();
+    final balanceController = TextEditingController(text: "0.00");
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: AlertDialog(
+            title: const Text(
+              "Add New Customer",
+              style: TextStyle(fontFamily: 'SanFrancisco'),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: "Name"),
+                  ),
+                  TextField(
+                    controller: phoneController,
+                    decoration: const InputDecoration(labelText: "Phone"),
+                  ),
+                  TextField(
+                    controller: addressController,
+                    decoration: const InputDecoration(labelText: "Address"),
+                  ),
+                  TextField(
+                    controller: tipnController,
+                    decoration: const InputDecoration(labelText: "PAN/TPN"),
+                  ),
+                  TextField(
+                    controller: balanceController,
+                    decoration: const InputDecoration(
+                      labelText: "Outstanding Balance",
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (nameController.text.isEmpty ||
+                      phoneController.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Name and Phone are required"),
+                      ),
+                    );
+                    return;
+                  }
+
+                  final newCustomer = Customer(
+                    name: nameController.text,
+                    phone: phoneController.text,
+                    address: addressController.text,
+                    tipn: tipnController.text,
+                    outstandingbalance: balanceController.text,
+                  );
+
+                  // Add to the list
+                  customers.add(newCustomer);
+
+                  // Refresh the selection dialog
+                  setSelectionState(() {});
+
+                  Navigator.pop(context);
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Customer added successfully"),
+                      backgroundColor: Color(0xff7CD23D),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xff7CD23D),
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text("Save Customer"),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   void _showCustomerSelectionDialog() {
     final TextEditingController searchController = TextEditingController();
     showDialog(
@@ -35,7 +140,7 @@ class _POSLandingPageState extends State<POSLandingPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             // Filter customers based on search query
-            List<dynamic> filteredCustomers = customers.where((customer) {
+            List<Customer> filteredCustomers = customers.where((customer) {
               final searchQuery = searchController.text.toLowerCase();
               final name = customer.name.toLowerCase();
               final phone = customer.phone.toLowerCase();
@@ -73,7 +178,7 @@ class _POSLandingPageState extends State<POSLandingPage> {
                             children: [
                               TextButton(
                                 onPressed: () {
-                                  //todo
+                                  _showAddCustomerDialog(context, setState);
                                 },
                                 child: Row(
                                   children: const [
@@ -100,7 +205,7 @@ class _POSLandingPageState extends State<POSLandingPage> {
                       TextField(
                         controller: searchController,
                         onChanged: (value) {
-                          setState(() {}); // Rebuild to update filtered list
+                          setState(() {});
                         },
                         decoration: InputDecoration(
                           hintText: "Search by name or phone number",
@@ -265,24 +370,45 @@ class _POSLandingPageState extends State<POSLandingPage> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           const SizedBox(height: 4),
-                                          Row(
-                                            children: [
-                                              Icon(
-                                                Icons.phone,
-                                                size: 13,
-                                                color: Colors.grey.shade600,
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                customer.phone,
-                                                style: TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w500,
-                                                  color: Colors.grey.shade700,
-                                                  fontFamily: 'SanFrancisco',
+                                          IntrinsicHeight(
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.phone,
+                                                  size: 13,
+                                                  color: Colors.grey.shade600,
                                                 ),
-                                              ),
-                                            ],
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  customer.phone,
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: Colors.grey.shade700,
+                                                    fontFamily: 'SanFrancisco',
+                                                  ),
+                                                ),
+                                                SizedBox(width: 4),
+                                                VerticalDivider(
+                                                  width: 1,
+                                                  thickness: 1,
+                                                  color: Colors.grey.shade600,
+                                                ),
+                                                SizedBox(width: 4),
+                                                Text(
+                                                  customer.tipn,
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: Colors.grey.shade700,
+                                                    fontFamily: 'SanFrancisco',
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                           const SizedBox(height: 2),
                                           Row(
@@ -309,6 +435,7 @@ class _POSLandingPageState extends State<POSLandingPage> {
                                               ),
                                             ],
                                           ),
+
                                           const SizedBox(height: 4),
                                           Container(
                                             padding: const EdgeInsets.symmetric(
@@ -395,7 +522,7 @@ class _POSLandingPageState extends State<POSLandingPage> {
   @override
   Widget build(BuildContext context) {
     final subtotal = items.fold<double>(
-      0,
+      0.0,
       (double sum, OrderItem item) => sum + (item.price * item.quantity),
     );
     final tax = subtotal * 0.13;
@@ -425,6 +552,7 @@ class _POSLandingPageState extends State<POSLandingPage> {
                 customerPhone: customerPhone,
                 customerAddress: customerAddress,
                 customerBalance: customerBalance,
+                tipn: tipn,
                 onRemove: (index) {
                   setState(() {
                     items.removeAt(index);
@@ -475,6 +603,9 @@ class _POSLandingPageState extends State<POSLandingPage> {
                     onPaymentModeChanged: (mode) {
                       setState(() {
                         selectedPayment = mode;
+                        if (mode == "Cash") {
+                          enteredAmount = total.toStringAsFixed(2);
+                        }
                       });
                     },
                     onAmountChanged: (amount) {
@@ -763,6 +894,7 @@ class OrderSidebar extends StatefulWidget {
   final String customerPhone;
   final String customerAddress;
   final String customerBalance;
+  final String tipn;
   final VoidCallback onCustomerSelect;
   final VoidCallback onCustomerClear;
 
@@ -776,6 +908,7 @@ class OrderSidebar extends StatefulWidget {
     required this.customerPhone,
     required this.customerAddress,
     required this.customerBalance,
+    required this.tipn,
     required this.onCustomerSelect,
     required this.onCustomerClear,
   });
@@ -793,7 +926,10 @@ class _OrderSidebarState extends State<OrderSidebar> {
 
   // Store dynamic charges
   final List<Map<String, dynamic>> _chargeTypes = [];
-  final List<Map<String, dynamic>> _customDiscounts = [];
+  final List<Map<String, dynamic>> _customDiscounts = [
+    {"name": "Weekend Offer", "value": 10.0, "type": "percentage"},
+    {"name": "New Year Offer", "value": 35.0, "type": "percentage"},
+  ];
   double _orderTip = 0;
   bool _isDiscountPercentage = false;
   bool _isTipPercentage = false;
@@ -1303,7 +1439,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
     );
   }
 
-  void _showDiscountSheet() {
+  void showDiscountSheet() {
     double tempDiscount = _orderDiscount;
     bool isPercentage = _isDiscountPercentage == true;
     final controller = TextEditingController(
@@ -1346,7 +1482,10 @@ class _OrderSidebarState extends State<OrderSidebar> {
                             children: [
                               IconButton(
                                 icon: const Icon(Icons.close),
-                                onPressed: () => Navigator.pop(context),
+                                onPressed: () {
+                                  controller.clear();
+                                  Navigator.pop(context);
+                                },
                               ),
                               const Expanded(
                                 child: Text(
@@ -1376,8 +1515,8 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                         isDense: true,
                                         label: Text(
                                           isPercentage
-                                              ? "Enter in percentage %"
-                                              : "Enter in Amount Rs",
+                                              ? "Percentage(%)"
+                                              : "Amount(Rs)",
                                         ),
                                         prefixText: isPercentage ? "%" : "Rs",
                                       ),
@@ -1395,36 +1534,70 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                       });
                                     },
                                   ),
-                                  Text(isPercentage ? "%" : "Rs"),
+                                  Text(isPercentage ? "Rs" : "%"),
                                 ],
                               ),
                               const SizedBox(height: 20),
                               const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: _customDiscounts.map((discount) {
-                                  return FilterChip(
-                                    label: Text(
-                                      "${discount['name']} (${discount['value']}${discount['type'] == 'percentage' ? '%' : 'Rs'})",
-                                      style: const TextStyle(fontSize: 12),
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 8.0),
+                                    child: FilterChip(
+                                      label: SizedBox(
+                                        width: double.infinity,
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
+                                          children: [
+                                            Icon(Icons.discount, size: 14),
+                                            Text(
+                                              "${discount['name']} (${discount['value']}${discount['type'] == 'percentage' ? '%' : 'Rs'})",
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                            TextButton(
+                                              onPressed: () {
+                                                setState(() {
+                                                  _orderDiscount =
+                                                      double.tryParse(
+                                                        controller.text,
+                                                      ) ??
+                                                      0;
+                                                  _isDiscountPercentage =
+                                                      isPercentage;
+                                                });
+                                              },
+                                              child: const Text(
+                                                "Apply",
+                                                style: TextStyle(
+                                                  color: Color(0xff7CD23D),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      selected: false,
+                                      onSelected: (bool selected) {
+                                        setSheetState(() {
+                                          isPercentage =
+                                              discount['type'] == 'percentage';
+                                          tempDiscount = discount['value'];
+                                          controller.text = discount['value']
+                                              .toString();
+                                        });
+                                      },
+                                      backgroundColor: Colors.grey.shade200,
+                                      selectedColor: const Color(0xff7CD23D),
+                                      checkmarkColor: Colors.white,
                                     ),
-                                    selected: false,
-                                    onSelected: (bool selected) {
-                                      setSheetState(() {
-                                        isPercentage =
-                                            discount['type'] == 'percentage';
-                                        tempDiscount = discount['value'];
-                                        controller.text = discount['value']
-                                            .toString();
-                                      });
-                                    },
-                                    backgroundColor: Colors.grey.shade200,
-                                    selectedColor: const Color(0xff7CD23D),
-                                    checkmarkColor: Colors.white,
                                   );
                                 }).toList(),
                               ),
+
                               const SizedBox(height: 12),
                             ],
                           ),
@@ -1576,7 +1749,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                   },
                   onDiscount: () {
                     Navigator.pop(context);
-                    _showDiscountSheet();
+                    showDiscountSheet();
                   },
                   onCoupon: () {},
                   onCharges: () {
@@ -1649,8 +1822,8 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                   keyboardType: TextInputType.number,
                                   decoration: InputDecoration(
                                     labelText: isPercentage
-                                        ? "Percentage (%)"
-                                        : "Amount (Rs)",
+                                        ? "Percentage(%)"
+                                        : "Amount(Rs)",
                                     prefixText: isPercentage ? "% " : "Rs ",
                                     labelStyle: const TextStyle(
                                       fontFamily: 'SanFrancisco',
@@ -1670,7 +1843,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                   });
                                 },
                               ),
-                              Text(isPercentage ? "%" : "Rs"),
+                              Text(isPercentage ? "Rs" : "%"),
                             ],
                           ),
                         ),
@@ -1757,7 +1930,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                       },
                       onDiscount: () {
                         Navigator.pop(context);
-                        _showDiscountSheet();
+                        showDiscountSheet();
                       },
                       onCoupon: () {
                         Navigator.pop(context);
@@ -1872,8 +2045,8 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                   decoration: InputDecoration(
                                     isDense: true,
                                     labelText: isPercentage
-                                        ? "Percentage"
-                                        : "Amount",
+                                        ? "Percentage(%)"
+                                        : "Amount(Rs)",
                                     prefixText: isPercentage ? "% " : "Rs ",
                                   ),
                                 ),
@@ -1886,7 +2059,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                   });
                                 },
                               ),
-                              Text(isPercentage ? "%" : "Rs"),
+                              Text(isPercentage ? "Rs" : "%"),
                             ],
                           ),
                         ),
@@ -1909,7 +2082,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                       },
                       onDiscount: () {
                         Navigator.pop(context);
-                        _showDiscountSheet();
+                        showDiscountSheet();
                       },
                       onCoupon: () {
                         Navigator.pop(context);
@@ -2106,8 +2279,9 @@ class _OrderSidebarState extends State<OrderSidebar> {
               ],
             ),
           ),
-          SizedBox(height: 8),
-          const Divider(color: Color(0xFFE2E8F0)),
+          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+          SizedBox(height: 6),
+
           // Customer Info
           if (customerSelected) ...[
             Row(
@@ -2117,27 +2291,38 @@ class _OrderSidebarState extends State<OrderSidebar> {
                   child: Text(
                     "${widget.customerName} | ${widget.customerPhone}",
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 16,
                       color: Color(0xFF1E293B),
                       fontFamily: 'SanFrancisco',
                     ),
                   ),
                 ),
                 IconButton(
+                  constraints: BoxConstraints(minWidth: 0, minHeight: 0),
+                  style: ButtonStyle(
+                    padding: MaterialStateProperty.all(EdgeInsets.zero),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                   onPressed: widget.onCustomerClear,
                   icon: const Icon(Icons.clear, color: Colors.red, size: 20),
                 ),
               ],
             ),
             if (widget.customerAddress.isNotEmpty)
+              if (widget.customerAddress.isNotEmpty)
+                Text(
+                  "Location: ${widget.customerAddress}",
+                  style: const TextStyle(fontSize: 13, color: Colors.black),
+                ),
+            if (widget.tipn.isNotEmpty)
               Text(
-                "Location: ${widget.customerAddress}",
-                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                "Tipn: ${widget.tipn}",
+                style: const TextStyle(fontSize: 13, color: Colors.black),
               ),
             if (widget.customerBalance.isNotEmpty)
               Text(
                 "Balance: Rs ${widget.customerBalance}",
-                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                style: const TextStyle(fontSize: 13, color: Colors.black),
               ),
             const Divider(color: Color(0xFFE2E8F0)),
           ],
@@ -2236,7 +2421,6 @@ class _OrderSidebarState extends State<OrderSidebar> {
                       false,
                     ),
                   const SizedBox(height: 8),
-
                   // Quick Actions
                   Container(
                     padding: const EdgeInsets.symmetric(vertical: 4),
@@ -2257,7 +2441,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                           ),
                         ),
                         Icon(Icons.keyboard_double_arrow_right_outlined),
-                        _quickActionButton("Discount", _showDiscountSheet), 
+                        _quickActionButton("Discount", showDiscountSheet),
                         _quickActionButton("Coupon", _showCouponSheet),
                         _quickActionButton("Charges", _showSelectChargeSheet),
                         _quickActionButton("Tips", _showAddtipedChargeSheet),
@@ -2266,7 +2450,6 @@ class _OrderSidebarState extends State<OrderSidebar> {
                   ),
                   const SizedBox(height: 8),
                 ],
-
                 // Total Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -2298,12 +2481,11 @@ class _OrderSidebarState extends State<OrderSidebar> {
                     ),
                   ],
                 ),
-
                 // Footer Info
                 Row(
                   children: [
                     Text(
-                      "${widget.items.length} items | ${widget.items.fold<double>(0, (double sum, OrderItem item) => sum + item.quantity).toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '')} units",
+                      "${widget.items.length} items | ${widget.items.fold<double>(0.0, (double sum, OrderItem item) => sum + item.quantity).toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '')} units",
                       style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ],

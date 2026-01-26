@@ -3,6 +3,7 @@ import 'package:itemedit/ui/trade/model/product_class.dart';
 import 'dart:async';
 
 import '../trade_landing_page.dart';
+import 'custom_num.dart';
 
 // ignore: must_be_immutable
 class PaymentBody extends StatefulWidget {
@@ -65,6 +66,7 @@ class _PaymentBodyState extends State<PaymentBody> {
   late TextEditingController _deliveryAddressController;
   int _remainingSeconds = 0;
   Timer? _timer;
+  bool _shouldClearAmountOnInput = false;
 
   @override
   void initState() {
@@ -78,6 +80,24 @@ class _PaymentBodyState extends State<PaymentBody> {
     _deliveryAddressController = TextEditingController(
       text: widget.customerAddress,
     );
+    // Initial amount sync
+    if (widget.selectedPayment == "Cash" && widget.enteredAmount.isEmpty) {
+      _amount.text = widget.total.toStringAsFixed(2);
+      _shouldClearAmountOnInput = true;
+    } else {
+      _amount.text = widget.enteredAmount;
+      if (widget.selectedPayment == "Cash") {
+        _shouldClearAmountOnInput = true;
+      }
+    }
+    // Sync _amount changes with parent state
+    _amount.addListener(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          widget.onAmountChanged(_amount.text);
+        }
+      });
+    });
   }
 
   @override
@@ -88,6 +108,14 @@ class _PaymentBodyState extends State<PaymentBody> {
     }
     if (widget.customerAddress != oldWidget.customerAddress) {
       _deliveryAddressController.text = widget.customerAddress;
+    }
+    if (widget.enteredAmount != oldWidget.enteredAmount &&
+        widget.enteredAmount != _amount.text) {
+      _amount.text = widget.enteredAmount;
+    }
+    if (widget.selectedPayment != oldWidget.selectedPayment &&
+        widget.selectedPayment == "Cash") {
+      _shouldClearAmountOnInput = true;
     }
   }
 
@@ -106,23 +134,35 @@ class _PaymentBodyState extends State<PaymentBody> {
     super.dispose();
   }
 
+  void _clearTextfields() {
+    _tipController.clear();
+    _noteController.clear();
+    _emailController.clear();
+    _refController.clear();
+    _deliveryPhoneController.clear();
+    _deliveryAddressController.clear();
+    _amount.clear();
+
+    _delayTimeController.clear();
+  }
+
   void _handleCheckout() {
     setState(() {
-      _isPaymentSuccess = true;
+      _isPaymentSuccess = false;
     });
   }
 
-  void _handleNewSale() {
-    widget.onConfirm();
-  }
+  // void _handleNewSale() {
+  //   widget.onConfirm();
+  // }
 
-  void _onBackspace() {
-    if (widget.enteredAmount.isNotEmpty) {
-      widget.onAmountChanged(
-        widget.enteredAmount.substring(0, widget.enteredAmount.length - 1),
-      );
-    }
-  }
+  // void _onBackspace() {
+  //   if (widget.enteredAmount.isNotEmpty) {
+  //     widget.onAmountChanged(
+  //       widget.enteredAmount.substring(0, widget.enteredAmount.length - 1),
+  //     );
+  //   }
+  // }
 
   Widget _buildCreditSaleFrame() {
     final bool customerSelected =
@@ -130,7 +170,6 @@ class _PaymentBodyState extends State<PaymentBody> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxWidth = constraints.maxWidth;
-
         return Container(
           decoration: const BoxDecoration(color: Colors.white),
           child: Column(
@@ -387,6 +426,7 @@ class _PaymentBodyState extends State<PaymentBody> {
                       ],
                     ),
             ),
+            SizedBox(height: 10),
             // Time Picker for Pickup Later
             if (_checkoutType == "Pickup Later") ...[
               const SizedBox(height: 10),
@@ -440,7 +480,6 @@ class _PaymentBodyState extends State<PaymentBody> {
                               ),
                             )
                           : null,
-                      // border: const OutlineInputBorder(),
                     ),
                     enabled: false,
                   ),
@@ -456,17 +495,28 @@ class _PaymentBodyState extends State<PaymentBody> {
                   keyboardType: TextInputType.phone,
                   decoration: const InputDecoration(
                     labelText: 'Delivery Phone',
+                    labelStyle: TextStyle(
+                      fontSize: 12,
+                      fontFamily: 'SanFrancisco',
+                    ),
+                    prefixIcon: Icon(Icons.phone),
                     hintText: '',
                     isDense: true,
                   ),
                 ),
               ),
+              const SizedBox(height: 10),
               ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: maxWidth),
                 child: TextField(
                   controller: _deliveryAddressController,
                   decoration: const InputDecoration(
                     labelText: 'Delivery Address',
+                    prefixIcon: Icon(Icons.location_on),
+                    labelStyle: TextStyle(
+                      fontSize: 1,
+                      fontFamily: 'SanFrancisco',
+                    ),
                     hintText: '',
                     isDense: true,
                   ),
@@ -481,12 +531,6 @@ class _PaymentBodyState extends State<PaymentBody> {
 
   @override
   Widget build(BuildContext context) {
-    // Update amount controller text when enteredAmount changes
-    if (widget.selectedPayment == "Cash" && widget.enteredAmount.isEmpty) {
-      _amount.text = widget.total.toStringAsFixed(2);
-    } else if (_amount.text != widget.enteredAmount) {
-      _amount.text = widget.enteredAmount;
-    }
     if (_isPaymentSuccess) {
       return _buildSuccessView();
     }
@@ -518,7 +562,11 @@ class _PaymentBodyState extends State<PaymentBody> {
                         Row(
                           children: [
                             IconButton(
-                              onPressed: widget.onBack,
+                              onPressed: () {
+                                _clearTextfields();
+                                widget.onPaymentModeChanged("");
+                                widget.onBack();
+                              },
                               icon: const Icon(Icons.arrow_back),
                             ),
                             const SizedBox(width: 8),
@@ -563,7 +611,11 @@ class _PaymentBodyState extends State<PaymentBody> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             IconButton(
-                              onPressed: widget.onBack,
+                              onPressed: () {
+                                _clearTextfields();
+                                widget.onPaymentModeChanged("");
+                                widget.onBack();
+                              },
                               icon: const Icon(Icons.arrow_back),
                             ),
                             const SizedBox(width: 8),
@@ -619,84 +671,93 @@ class _PaymentBodyState extends State<PaymentBody> {
                       mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        isSmallScreen
-                            ? Column(
-                                children: [
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: SingleChildScrollView(
-                                      scrollDirection: Axis.horizontal,
-                                      child: Row(
-                                        children: [
-                                          _paymentMethodButton("Cash"),
-                                          _paymentMethodButton("Credit Sale"),
-                                          _paymentMethodButton("Union Pay"),
-                                          _paymentMethodButton("Gift Card"),
-                                          _paymentMethodButton("Reward"),
-                                        ],
+                        Expanded(
+                          child: isSmallScreen
+                              ? Column(
+                                  children: [
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: SingleChildScrollView(
+                                        scrollDirection: Axis.horizontal,
+                                        child: Row(
+                                          children: [
+                                            _paymentMethodButton("Cash"),
+                                            _paymentMethodButton("Credit Sale"),
+                                            _paymentMethodButton("Union Pay"),
+                                            _paymentMethodButton("Gift Card"),
+                                            _paymentMethodButton("Reward"),
+                                          ],
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _buildCommonAmountHeader(
-                                    constraints.maxWidth,
-                                  ),
-                                  const SizedBox(
-                                    width: double.infinity,
-                                    child: Divider(),
-                                  ),
-                                  if (isCashSelected)
-                                    Expanded(child: _buildCashSection()),
-                                  if (isCardSelected)
-                                    Expanded(child: _buildCreditSaleFrame()),
-                                ],
-                              )
-                            : Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SizedBox(
-                                    width: 175,
-                                    child: SingleChildScrollView(
-                                      scrollDirection: Axis.vertical,
+                                    const SizedBox(height: 16),
+                                    _buildCommonAmountHeader(
+                                      constraints.maxWidth,
+                                    ),
+                                    const SizedBox(
+                                      width: double.infinity,
+                                      child: Divider(),
+                                    ),
+                                    if (isCashSelected)
+                                      Expanded(child: _buildCashSection()),
+                                    if (isCardSelected)
+                                      Expanded(child: _buildCreditSaleFrame()),
+                                  ],
+                                )
+                              : Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SizedBox(
+                                      width: 175,
+                                      child: SingleChildScrollView(
+                                        scrollDirection: Axis.vertical,
+                                        child: Column(
+                                          children: [
+                                            _paymentMethodButton("Cash"),
+                                            _paymentMethodButton("Credit Sale"),
+                                            _paymentMethodButton("Union Pay"),
+                                            _paymentMethodButton("Gift Card"),
+                                            _paymentMethodButton("Reward"),
+                                            _paymentMethodButton("Credit"),
+                                            _paymentMethodButton("Union "),
+                                            _paymentMethodButton("Gift "),
+                                            _paymentMethodButton("Reward as"),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
                                       child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          _paymentMethodButton("Cash"),
-                                          _paymentMethodButton("Credit Sale"),
-                                          _paymentMethodButton("Union Pay"),
-                                          _paymentMethodButton("Gift Card"),
-                                          _paymentMethodButton("Reward"),
-                                          _paymentMethodButton("Credit"),
-                                          _paymentMethodButton("Union "),
-                                          _paymentMethodButton("Gift "),
-                                          _paymentMethodButton("Reward as"),
+                                          _buildCommonAmountHeader(
+                                            constraints.maxWidth - 191,
+                                          ),
+                                          const SizedBox(
+                                            width: double.infinity,
+                                            child: Divider(),
+                                          ),
+                                          if (isCashSelected)
+                                            Expanded(
+                                              child: _buildCashSection(),
+                                            ),
+                                          if (isCardSelected)
+                                            Expanded(
+                                              child: Container(
+                                                padding: const EdgeInsets.all(
+                                                  10,
+                                                ),
+                                                child: _buildCreditSaleFrame(),
+                                              ),
+                                            ),
                                         ],
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        _buildCommonAmountHeader(
-                                          constraints.maxWidth - 191,
-                                        ),
-                                        const SizedBox(
-                                          width: double.infinity,
-                                          child: Divider(),
-                                        ),
-                                        if (isCashSelected) _buildCashSection(),
-                                        if (isCardSelected)
-                                          Container(
-                                            padding: const EdgeInsets.all(10),
-                                            child: _buildCreditSaleFrame(),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                  ],
+                                ),
+                        ),
                       ],
                     ),
                   ),
@@ -704,7 +765,7 @@ class _PaymentBodyState extends State<PaymentBody> {
               ),
             ),
             // Bottom Bar
-            _buildBottomBar(isSmallScreen),
+            _buildBottomBar(isSmallScreen, constraints.maxWidth),
           ],
         );
       },
@@ -712,41 +773,32 @@ class _PaymentBodyState extends State<PaymentBody> {
   }
 
   Widget _buildCashSection() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxWidth = constraints.maxWidth;
-
-        return SingleChildScrollView(
-          scrollDirection: Axis.vertical,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Numpad
-              Container(
-                width: double.infinity,
-                constraints: BoxConstraints(maxWidth: maxWidth),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                ),
-                child: Column(
-                  children: [
-                    _numpadRow(["7", "8", "9"]),
-                    _numpadRow(["4", "5", "6"]),
-                    _numpadRow(["1", "2", "3"]),
-                    _numpadRow([".", "0", "00"]),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildNoteAndPurchaseType(),
-            ],
+    return SingleChildScrollView(
+      scrollDirection: Axis.vertical,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Unified CustomKeyboard
+          CustomKeyboard(
+            controller: _amount,
+            onClose: _handleCheckout,
+            onValueInput: (val) {
+              if (_shouldClearAmountOnInput) {
+                _amount.text = val;
+                _shouldClearAmountOnInput = false;
+              } else {
+                _amount.text += val;
+              }
+            },
           ),
-        );
-      },
+          const SizedBox(height: 16),
+          _buildNoteAndPurchaseType(),
+        ],
+      ),
     );
   }
 
-  Widget _buildBottomBar(bool isSmallScreen) {
+  Widget _buildBottomBar(bool isSmallScreen, double maxWidth) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -756,7 +808,7 @@ class _PaymentBodyState extends State<PaymentBody> {
       ),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 490),
+          constraints: const BoxConstraints(maxWidth: 1200),
           child: isSmallScreen
               ? Column(
                   children: [
@@ -819,55 +871,66 @@ class _PaymentBodyState extends State<PaymentBody> {
                   ],
                 )
               : Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          _getPaymentStatusLabel(),
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'SanFrancisco',
+                    const SizedBox(width: 191),
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                _getPaymentStatusLabel(),
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'SanFrancisco',
+                                ),
+                              ),
+                              Text(
+                                _calculateChange(),
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'SanFrancisco',
+                                  color: (() {
+                                    final value =
+                                        double.tryParse(widget.enteredAmount) ??
+                                        0;
+                                    final change = value - widget.total;
+                                    return change < 0
+                                        ? Colors.red
+                                        : Colors.black;
+                                  })(),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        Text(
-                          _calculateChange(),
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'SanFrancisco',
-                            color: (() {
-                              final value =
-                                  double.tryParse(widget.enteredAmount) ?? 0;
-                              final change = value - widget.total;
-                              return change < 0 ? Colors.red : Colors.black;
-                            })(),
+                          ElevatedButton(
+                            onPressed: _handleCheckout,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.black,
+                              side: const BorderSide(color: Colors.black),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 32,
+                                vertical: 16,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text(
+                              "Checkout",
+                              style: TextStyle(
+                                fontFamily: 'SanFrancisco',
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    ElevatedButton(
-                      onPressed: _handleCheckout,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
-                        side: const BorderSide(color: Colors.black),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 16,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        "Checkout",
-                        style: TextStyle(
-                          fontFamily: 'SanFrancisco',
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        ],
                       ),
                     ),
                   ],
@@ -1218,47 +1281,6 @@ class _PaymentBodyState extends State<PaymentBody> {
     );
   }
 
-  Widget _numpadRow(List<String> keys) {
-    return Row(
-      children: keys.map((key) {
-        return Expanded(
-          child: InkWell(
-            onTap: () {
-              if (key == "00") {
-                widget.onAmountChanged("${widget.enteredAmount}00");
-              } else {
-                if (key == "." && widget.enteredAmount.contains(".")) {
-                  return;
-                }
-                widget.onAmountChanged(widget.enteredAmount + key);
-              }
-            },
-            child: Container(
-              decoration: BoxDecoration(
-                border: Border.symmetric(
-                  vertical: BorderSide(width: 0.09),
-                  horizontal: BorderSide(width: 0.09),
-                ),
-              ),
-              height: 70,
-              child: Center(
-                child: Text(
-                  key,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'SanFrancisco',
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
   Widget _buildCommonAmountHeader(double maxWidth) {
     bool isCash = widget.selectedPayment == "Cash";
 
@@ -1286,6 +1308,25 @@ class _PaymentBodyState extends State<PaymentBody> {
                     child: TextField(
                       controller: _amount,
                       focusNode: _amountFocusNode2,
+                      keyboardType: TextInputType.number,
+                      onTap: () {
+                        setState(() {
+                          _shouldClearAmountOnInput = true;
+                        });
+                      },
+                      onChanged: (value) {
+                        if (_shouldClearAmountOnInput) {
+                          setState(() {
+                            _amount.text = value.isNotEmpty
+                                ? value[value.length - 1]
+                                : '';
+                            _amount.selection = TextSelection.collapsed(
+                              offset: _amount.text.length,
+                            );
+                            _shouldClearAmountOnInput = false;
+                          });
+                        }
+                      },
                       decoration: const InputDecoration(
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
@@ -1300,19 +1341,13 @@ class _PaymentBodyState extends State<PaymentBody> {
                       ),
                     ),
                   ),
-                  InkWell(
-                    onTap: _onBackspace,
-                    child: const Icon(
-                      Icons.backspace,
-                      size: 21,
-                      color: Colors.grey,
-                    ),
-                  ),
                 ],
               )
             else
               Text(
-                "Rs ${widget.total.toStringAsFixed(2)}",
+                widget.selectedPayment.isEmpty
+                    ? "Rs 0.00"
+                    : "Rs ${widget.total.toStringAsFixed(2)}",
                 style: TextStyle(
                   fontSize: maxWidth < 400 ? 20 : 24,
                   fontWeight: FontWeight.bold,
@@ -1327,6 +1362,9 @@ class _PaymentBodyState extends State<PaymentBody> {
   }
 
   String _calculateChange() {
+    if (widget.selectedPayment.isEmpty) {
+      return "Rs 0.00";
+    }
     final paid = double.tryParse(widget.enteredAmount) ?? 0;
     final change = paid - widget.total;
     if (change < 0) {
@@ -1336,6 +1374,9 @@ class _PaymentBodyState extends State<PaymentBody> {
   }
 
   String _getPaymentStatusLabel() {
+    if (widget.selectedPayment.isEmpty) {
+      return "Balance Due ";
+    }
     final paid = double.tryParse(widget.enteredAmount) ?? 0;
     final change = paid - widget.total;
     if (change < 0) {

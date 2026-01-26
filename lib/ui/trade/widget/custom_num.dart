@@ -7,6 +7,8 @@ class CustomKeyboard extends StatefulWidget {
   final VoidCallback? onCoupon;
   final VoidCallback? onCharges;
   final VoidCallback? onTips;
+  final VoidCallback? onWidget;
+  final ValueSetter<String>? onValueInput;
 
   const CustomKeyboard({
     required this.controller,
@@ -15,6 +17,8 @@ class CustomKeyboard extends StatefulWidget {
     this.onCoupon,
     this.onCharges,
     this.onTips,
+    this.onValueInput,
+    this.onWidget,
     super.key,
   });
 
@@ -26,7 +30,11 @@ class _CustomKeyboardState extends State<CustomKeyboard> {
   bool isNumeric = true;
 
   void _input(String text) {
-    widget.controller.text += text;
+    if (widget.onValueInput != null) {
+      widget.onValueInput!(text);
+    } else {
+      widget.controller.text += text;
+    }
   }
 
   void _backspace() {
@@ -39,7 +47,6 @@ class _CustomKeyboardState extends State<CustomKeyboard> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.grey[100],
       padding: const EdgeInsets.all(8),
       child: isNumeric ? _buildNumericLayout() : _buildAlphaLayout(),
     );
@@ -101,7 +108,7 @@ class _CustomKeyboardState extends State<CustomKeyboard> {
                             children: [
                               _buildKeyButton("."),
                               _buildKeyButton("0"),
-                              Expanded(flex: 3, child: _buildKeyButton("00")),
+                              Expanded(child: _buildKeyButton("00")),
                             ],
                           ),
                         ),
@@ -130,15 +137,18 @@ class _CustomKeyboardState extends State<CustomKeyboard> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Expanded(
-                        flex: 2,
-                        child: _buildActionButton(
-                          label: "Enter",
-                          onTap: widget.onClose,
-                          color: const Color(0xff7CD23D),
-                          textColor: Colors.white,
+                      if (widget.onDiscount != null ||
+                          widget.onCoupon != null ||
+                          widget.onCharges != null ||
+                          widget.onTips != null ||
+                          widget.onWidget != null)
+                        Expanded(
+                          child: _buildActionButton(
+                            label: "Enter",
+                            onTap: widget.onClose,
+                            color: Colors.green[100]!,
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),

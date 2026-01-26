@@ -6,6 +6,8 @@ class Product {
   final String category;
   final String? image;
   final Color color;
+  final String? sku;
+  final String? description;
   bool? isWeightBased;
   Product({
     required this.name,
@@ -13,6 +15,8 @@ class Product {
     required this.category,
     this.image,
     required this.color,
+    this.sku,
+    this.description,
     this.isWeightBased = false,
   });
 }
@@ -23,6 +27,8 @@ final List<Product> products = [
     price: 225,
     category: "Beverages",
     // image: "https://loremflickr.com/200/200/cappuccino",
+    sku: '123456',
+    description: 'This is a cappuccino',
     color: const Color(0xFFFEF3C7),
   ),
   Product(
@@ -30,6 +36,8 @@ final List<Product> products = [
     price: 180,
     category: "Beverages",
     image: "https://loremflickr.com/200/200/espresso",
+    sku: '1256',
+    description: 'This is a espresso',
     color: const Color(0xFFDDD6FE),
   ),
   Product(
@@ -37,6 +45,8 @@ final List<Product> products = [
     price: 650,
     category: "Food",
     image: "https://loremflickr.com/200/200/salad",
+    sku: '1256',
+    description: 'This is a caesar salad',
     color: const Color(0xFFBBF7D0),
   ),
   Product(
@@ -44,6 +54,8 @@ final List<Product> products = [
     price: 890,
     category: "Food",
     image: "https://loremflickr.com/200/200/pizza",
+    sku: '1256',
+    description: 'This is a margherita pizza',
     color: const Color(0xFFFECDD3),
   ),
   Product(
@@ -51,6 +63,8 @@ final List<Product> products = [
     price: 400,
     category: "Dessert",
     image: "https://loremflickr.com/200/200/cheesecake",
+    sku: '1256',
+    description: 'This is a cheesecake',
     color: const Color(0xFFFED7AA),
   ),
   Product(
@@ -58,6 +72,8 @@ final List<Product> products = [
     price: 320,
     category: "Dessert",
     image: "https://loremflickr.com/200/200/brownie",
+    sku: '1256',
+    description: 'This is a brownie',
     color: const Color(0xFFD1D5DB),
   ),
   Product(
@@ -284,11 +300,13 @@ class Customer {
   String name;
   String phone;
   String address;
+  String tipn;
   String outstandingbalance;
   Customer({
     required this.name,
     required this.phone,
     required this.address,
+    required this.tipn,
     required this.outstandingbalance,
   });
 }
@@ -298,18 +316,21 @@ final List<Customer> customers = <Customer>[
     name: "John Doe",
     phone: "1234567890",
     address: "123 Main St, Anytown USA",
+    tipn: "1234",
     outstandingbalance: "100.00",
   ),
   Customer(
     name: "Jane Doe",
     phone: "9876543210",
     address: "456 Elm St, Anytown USA",
+    tipn: "5678",
     outstandingbalance: "50.00",
   ),
   Customer(
     name: "Bob Smith",
     phone: "5555555555",
     address: "789 Oak St, Anytown USA",
+    tipn: "9012",
     outstandingbalance: "75.00",
   ),
 ];

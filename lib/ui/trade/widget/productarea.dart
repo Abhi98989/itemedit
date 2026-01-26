@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:itemedit/ui/trade/widget/productcard.dart' show ProductCard;
+import '../model/category_model.dart';
 import '../model/product_class.dart';
 
 class MainProductArea extends StatefulWidget {
@@ -34,41 +35,22 @@ class MainProductArea extends StatefulWidget {
 }
 
 class _MainProductAreaState extends State<MainProductArea> {
-  String selectedCategory = "All";
+  late Category selectedCategory;
   bool isGridView = true;
   bool isKeyboardBlocked = false;
-  List<String> filteredCategories = [];
+  final List<Category> categories = staticCategories;
+  List<Category> filteredCategories = [];
   TextEditingController categorySearchController = TextEditingController();
   TextEditingController productSearchController = TextEditingController();
   String productSearchQuery = "";
   bool showCategory = false;
 
-  final List<String> categories = [
-    "All",
-    "Beverages",
-    "Hot Beverages",
-    "Cold Beverages",
-    "Food",
-    "Main Course",
-    "Fast Food",
-    "Dessert",
-    "Bakery",
-    "Snacks",
-    "Starters",
-    "Salads",
-    "Combo Meals",
-    "Breakfast",
-    "Lunch",
-    "Dinner",
-    "Healthy",
-    "Vegan",
-    "Kids Menu",
-  ];
-
   List<Product> get filteredProducts {
     List<Product> filtered = products;
-    if (selectedCategory != "All") {
-      filtered = filtered.where((p) => p.category == selectedCategory).toList();
+    if (selectedCategory.name != "All") {
+      filtered = filtered
+          .where((p) => p.category == selectedCategory.name)
+          .toList();
     }
     if (productSearchQuery.isNotEmpty) {
       filtered = filtered
@@ -84,6 +66,7 @@ class _MainProductAreaState extends State<MainProductArea> {
   @override
   void initState() {
     super.initState();
+    selectedCategory = categories.first;
     filteredCategories = List.from(categories);
   }
 
@@ -104,7 +87,7 @@ class _MainProductAreaState extends State<MainProductArea> {
         filteredCategories = categories
             .where(
               (category) =>
-                  category.toLowerCase().contains(query.toLowerCase()),
+                  category.name.toLowerCase().contains(query.toLowerCase()),
             )
             .toList();
       });
@@ -212,7 +195,7 @@ class _MainProductAreaState extends State<MainProductArea> {
                                   final category = filteredCategories[index];
                                   return ListTile(
                                     title: Text(
-                                      category,
+                                      category.name,
                                       style: const TextStyle(
                                         fontSize: 15,
                                         fontFamily: 'SanFrancisco',
@@ -436,15 +419,82 @@ class _MainProductAreaState extends State<MainProductArea> {
                     indent: 5,
                     endIndent: 5,
                   ),
-                  IconButton(
-                    onPressed: widget.onMoreClick,
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      switch (value) {
+                        case 'Sync':
+                          // Handle Sync
+                          break;
+                        case 'Cash in/out':
+                          // Handle Cash in/out
+                          break;
+                        case 'Open cash drawer':
+                          // Handle Open cash drawer
+                          break;
+                        case 'Change Outlet':
+                          // Handle Change Outlet
+                          break;
+                      }
+                      widget.onMoreClick();
+                    },
                     icon: const Icon(
                       Icons.more_vert,
                       size: 30,
                       color: Color(0xFF64748B),
                     ),
-                    constraints: const BoxConstraints(),
+                    itemBuilder: (BuildContext context) =>
+                        <PopupMenuEntry<String>>[
+                          const PopupMenuItem<String>(
+                            value: 'Sync',
+                            child: Row(
+                              children: [
+                                Icon(Icons.sync, size: 20),
+                                Text(
+                                  'Sync',
+                                  style: TextStyle(fontFamily: 'SanFrancisco'),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'Cash in/out',
+                            child: Row(
+                              children: [
+                                Icon(Icons.attach_money, size: 20),
+                                Text(
+                                  'Cash in/out',
+                                  style: TextStyle(fontFamily: 'SanFrancisco'),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'Open cash drawer',
+                            child: Row(
+                              children: [
+                                Icon(Icons.attach_money, size: 20),
+                                Text(
+                                  'Open cash drawer',
+                                  style: TextStyle(fontFamily: 'SanFrancisco'),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'Change Outlet',
+                            child: Row(
+                              children: [
+                                Icon(Icons.store, size: 20),
+                                Text(
+                                  'Change Outlet',
+                                  style: TextStyle(fontFamily: 'SanFrancisco'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                     padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
                 ],
               ),
@@ -470,7 +520,7 @@ class _MainProductAreaState extends State<MainProductArea> {
                       itemCount: categories.length,
                       itemBuilder: (context, index) {
                         final category = categories[index];
-                        final isSelected = selectedCategory == category;
+                        final isSelected = selectedCategory.id == category.id;
                         return GestureDetector(
                           onTap: () {
                             setState(() {
@@ -478,26 +528,29 @@ class _MainProductAreaState extends State<MainProductArea> {
                             });
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 5,
-                            ),
+                            padding: const EdgeInsets.all(8.0),
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? Colors.white
                                   : Colors.transparent,
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(3),
                               border: Border(
                                 left: BorderSide(
                                   color: isSelected
-                                      ? Colors.grey
+                                      ? selectedCategory.color
                                       : Colors.white,
-                                  width: 2,
+                                  width: 3,
+                                ),
+                                bottom: BorderSide(
+                                  color: isSelected
+                                      ? selectedCategory.color
+                                      : Colors.white,
+                                  width: 0.6,
                                 ),
                               ),
                             ),
                             child: Text(
-                              category,
+                              category.name,
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: isSelected
@@ -542,19 +595,23 @@ class _MainProductAreaState extends State<MainProductArea> {
                         padding: const EdgeInsets.all(5),
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: isGridView ? 6 : 1,
-                          childAspectRatio: isGridView ? 1.1 : 15,
+                          childAspectRatio: isGridView ? 1.1 : 13,
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 12,
                         ),
                         itemCount: filteredProducts.length,
                         itemBuilder: (context, index) {
+                          final product = filteredProducts[index];
+                          final category = categories.firstWhere(
+                            (c) => c.name == product.category,
+                            orElse: () => categories.first,
+                          );
                           return ProductCard(
-                            product: filteredProducts[index],
+                            product: product,
+                            category: category,
                             isGridView: isGridView,
-                            onTap: (qty) => widget.onProductTap(
-                              filteredProducts[index],
-                              quantity: qty,
-                            ),
+                            onTap: (qty) =>
+                                widget.onProductTap(product, quantity: qty),
                           );
                         },
                       ),
@@ -586,7 +643,6 @@ class _MainProductAreaState extends State<MainProductArea> {
                 25,
                 Colors.grey,
               ),
-
               Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFFF1F5F9),
