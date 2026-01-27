@@ -27,7 +27,7 @@ class MainProductArea extends StatefulWidget {
     required this.onScanClick,
     required this.onMoreClick,
     required this.onDeleteClick,
-    required this.price, // Pass the price here,
+    required this.price, 
   });
 
   @override
@@ -47,9 +47,9 @@ class _MainProductAreaState extends State<MainProductArea> {
 
   List<Product> get filteredProducts {
     List<Product> filtered = products;
-    if (selectedCategory.name != "All") {
+    if (selectedCategory.categoryName != "All") {
       filtered = filtered
-          .where((p) => p.category == selectedCategory.name)
+          .where((p) => p.category == selectedCategory.categoryName)
           .toList();
     }
     if (productSearchQuery.isNotEmpty) {
@@ -86,8 +86,9 @@ class _MainProductAreaState extends State<MainProductArea> {
       setState(() {
         filteredCategories = categories
             .where(
-              (category) =>
-                  category.name.toLowerCase().contains(query.toLowerCase()),
+              (category) => category.categoryName.toLowerCase().contains(
+                query.toLowerCase(),
+              ),
             )
             .toList();
       });
@@ -195,7 +196,7 @@ class _MainProductAreaState extends State<MainProductArea> {
                                   final category = filteredCategories[index];
                                   return ListTile(
                                     title: Text(
-                                      category.name,
+                                      category.categoryName,
                                       style: const TextStyle(
                                         fontSize: 15,
                                         fontFamily: 'SanFrancisco',
@@ -472,7 +473,7 @@ class _MainProductAreaState extends State<MainProductArea> {
                             value: 'Open cash drawer',
                             child: Row(
                               children: [
-                                Icon(Icons.attach_money, size: 20),
+                                Icon(Icons.menu, size: 20),
                                 Text(
                                   'Open cash drawer',
                                   style: TextStyle(fontFamily: 'SanFrancisco'),
@@ -520,7 +521,8 @@ class _MainProductAreaState extends State<MainProductArea> {
                       itemCount: categories.length,
                       itemBuilder: (context, index) {
                         final category = categories[index];
-                        final isSelected = selectedCategory.id == category.id;
+                        final isSelected =
+                            selectedCategory.categoryId == category.categoryId;
                         return GestureDetector(
                           onTap: () {
                             setState(() {
@@ -550,7 +552,7 @@ class _MainProductAreaState extends State<MainProductArea> {
                               ),
                             ),
                             child: Text(
-                              category.name,
+                              category.categoryName,
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: isSelected
@@ -603,7 +605,7 @@ class _MainProductAreaState extends State<MainProductArea> {
                         itemBuilder: (context, index) {
                           final product = filteredProducts[index];
                           final category = categories.firstWhere(
-                            (c) => c.name == product.category,
+                            (c) => c.categoryName == product.category,
                             orElse: () => categories.first,
                           );
                           return ProductCard(

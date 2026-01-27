@@ -56,6 +56,7 @@ class _WeightItemDialogState extends State<WeightItemDialog> {
         child: Container(
           width: 390,
           padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(color: Colors.white),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,7 +142,6 @@ class _WeightItemDialogState extends State<WeightItemDialog> {
                 ),
               ),
               const SizedBox(height: 20),
-
               // Use the shared CustomKeyboard
               CustomKeyboard(
                 controller: textEditingController,

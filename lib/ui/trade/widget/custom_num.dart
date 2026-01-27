@@ -8,6 +8,7 @@ class CustomKeyboard extends StatefulWidget {
   final VoidCallback? onCharges;
   final VoidCallback? onTips;
   final VoidCallback? onWidget;
+  final VoidCallback? onPaymode;
   final ValueSetter<String>? onValueInput;
 
   const CustomKeyboard({
@@ -19,6 +20,7 @@ class CustomKeyboard extends StatefulWidget {
     this.onTips,
     this.onValueInput,
     this.onWidget,
+    this.onPaymode,
     super.key,
   });
 
@@ -117,6 +119,7 @@ class _CustomKeyboardState extends State<CustomKeyboard> {
                   ),
                 ),
                 const SizedBox(width: 8),
+
                 // Right Actions
                 Expanded(
                   child: Column(
@@ -129,24 +132,27 @@ class _CustomKeyboardState extends State<CustomKeyboard> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Expanded(
-                        child: _buildActionButton(
-                          label: "Clear",
-                          onTap: () => widget.controller.clear(),
-                          color: Colors.red[100]!,
+                      if (widget.onWidget != null)
+                        Expanded(
+                          child: _buildActionButton(
+                            label: "Clear",
+                            onTap: () => widget.controller.clear(),
+                            color: Colors.red[100]!,
+                          ),
                         ),
-                      ),
                       const SizedBox(height: 8),
-                      if (widget.onDiscount != null ||
-                          widget.onCoupon != null ||
-                          widget.onCharges != null ||
-                          widget.onTips != null ||
-                          widget.onWidget != null)
+                      if (widget.onPaymode == null && widget.onWidget == null)
+                        //     widget.onCoupon != null ||
+                        //     widget.onCharges != null ||
+                        //     widget.onPaymode == null ||
+                        //     widget.onTips != null ||
+                        //     widget.onWidget == null)
                         Expanded(
                           child: _buildActionButton(
                             label: "Enter",
                             onTap: widget.onClose,
-                            color: Colors.green[100]!,
+                            color: const Color(0xff7CD23D),
+                            textColor: Colors.white,
                           ),
                         ),
                     ],
@@ -325,34 +331,34 @@ class _CustomKeyboardState extends State<CustomKeyboard> {
     );
   }
 
-  Widget _buildSideNavButton(
-    String label,
-    VoidCallback onTap, {
-    bool isAction = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: SizedBox(
-        height: 45,
-        child: TextButton(
-          style: TextButton.styleFrom(
-            backgroundColor: isAction ? Colors.grey[300] : Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-              side: BorderSide(color: Colors.grey.shade300),
-            ),
-          ),
-          onPressed: onTap,
-          child: Text(
-            label,
-            style: TextStyle(
-              color: Colors.black87,
-              fontWeight: isAction ? FontWeight.bold : FontWeight.normal,
-              fontSize: 13,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  // Widget _buildSideNavButton(
+  //   String label,
+  //   VoidCallback onTap, {
+  //   bool isAction = false,
+  // }) {
+  //   return Padding(
+  //     padding: const EdgeInsets.only(bottom: 8.0),
+  //     child: SizedBox(
+  //       height: 45,
+  //       child: TextButton(
+  //         style: TextButton.styleFrom(
+  //           backgroundColor: isAction ? Colors.grey[300] : Colors.white,
+  //           shape: RoundedRectangleBorder(
+  //             borderRadius: BorderRadius.circular(8),
+  //             side: BorderSide(color: Colors.grey.shade300),
+  //           ),
+  //         ),
+  //         onPressed: onTap,
+  //         child: Text(
+  //           label,
+  //           style: TextStyle(
+  //             color: Colors.black87,
+  //             fontWeight: isAction ? FontWeight.bold : FontWeight.normal,
+  //             fontSize: 13,
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:itemedit/ui/trade/model/product_class.dart';
 import 'dart:async';
-
 import '../trade_landing_page.dart';
 import 'custom_num.dart';
 
@@ -81,12 +80,13 @@ class _PaymentBodyState extends State<PaymentBody> {
       text: widget.customerAddress,
     );
     // Initial amount sync
-    if (widget.selectedPayment == "Cash" && widget.enteredAmount.isEmpty) {
+    // Initial amount sync
+    if (widget.selectedPayment.isNotEmpty && widget.enteredAmount.isEmpty) {
       _amount.text = widget.total.toStringAsFixed(2);
       _shouldClearAmountOnInput = true;
     } else {
       _amount.text = widget.enteredAmount;
-      if (widget.selectedPayment == "Cash") {
+      if (widget.selectedPayment.isNotEmpty) {
         _shouldClearAmountOnInput = true;
       }
     }
@@ -114,7 +114,7 @@ class _PaymentBodyState extends State<PaymentBody> {
       _amount.text = widget.enteredAmount;
     }
     if (widget.selectedPayment != oldWidget.selectedPayment &&
-        widget.selectedPayment == "Cash") {
+        widget.selectedPayment.isNotEmpty) {
       _shouldClearAmountOnInput = true;
     }
   }
@@ -184,22 +184,20 @@ class _PaymentBodyState extends State<PaymentBody> {
                     widget.onSelectCustomer();
                   }
                 },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: customerSelected
-                        ? const Color(0xFFF8FAFC)
-                        : Colors.white,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      topRight: Radius.circular(12),
-                    ),
-                  ),
-                  child: Theme(
-                    data: Theme.of(
-                      context,
-                    ).copyWith(dividerColor: Colors.transparent),
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
+                child: Column(
+                  spacing: 6,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (customerSelected)
+                      Text(
+                        "Bill to",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontFamily: 'SanFrancisco',
+                        ),
+                      ),
+                    Container(
                       decoration: BoxDecoration(
                         color: customerSelected
                             ? const Color(0xFFF8FAFC)
@@ -209,78 +207,92 @@ class _PaymentBodyState extends State<PaymentBody> {
                           topRight: Radius.circular(12),
                         ),
                       ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (!customerSelected)
-                            CircleAvatar(
-                              radius: 18,
-                              backgroundColor: Theme.of(
-                                context,
-                              ).primaryColor.withValues(alpha: 0.1),
-                              child: Icon(
-                                Icons.person,
-                                size: 18,
-                                color: Theme.of(context).primaryColor,
-                              ),
+                      child: Theme(
+                        data: Theme.of(
+                          context,
+                        ).copyWith(dividerColor: Colors.transparent),
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: customerSelected
+                                ? const Color(0xFFF8FAFC)
+                                : Colors.white,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(12),
+                              topRight: Radius.circular(12),
                             ),
-                          const SizedBox(width: 12),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (!customerSelected)
+                                CircleAvatar(
+                                  radius: 18,
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).primaryColor.withValues(alpha: 0.1),
+                                  child: Icon(
+                                    Icons.person,
+                                    size: 18,
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                                ),
+                              const SizedBox(width: 12),
 
-                          /// Text content
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                              /// Text content
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Flexible(
-                                      child: Text(
-                                        widget.customerName.isEmpty
-                                            ? "Select Customer"
-                                            : widget.customerName,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 15,
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            widget.customerName.isEmpty
+                                                ? "Select Customer"
+                                                : widget.customerName,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 15,
+                                              fontFamily: 'SanFrancisco',
+                                            ),
+                                          ),
+                                        ),
+                                        if (widget.customerName.isEmpty)
+                                          Icon(Icons.arrow_right_sharp),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    if (customerSelected) ...[
+                                      Text(
+                                        widget.customerPhone,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey.shade600,
                                           fontFamily: 'SanFrancisco',
                                         ),
                                       ),
-                                    ),
-                                    Icon(
-                                      widget.customerName.isEmpty
-                                          ? Icons.arrow_right_sharp
-                                          : Icons.edit,
-                                    ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        widget.customerAddress,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey.shade600,
+                                          fontFamily: 'SanFrancisco',
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
-                                const SizedBox(height: 2),
-                                if (customerSelected) ...[
-                                  Text(
-                                    widget.customerPhone,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey.shade600,
-                                      fontFamily: 'SanFrancisco',
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    widget.customerAddress,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey.shade600,
-                                      fontFamily: 'SanFrancisco',
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
               Divider(height: 1, color: Colors.grey.shade200),
@@ -290,16 +302,7 @@ class _PaymentBodyState extends State<PaymentBody> {
                 child: Column(
                   children: [
                     const SizedBox(height: 12),
-                    ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: maxWidth),
-                      child: TextField(
-                        controller: _refController,
-                        focusNode: _refFocusNode,
-                        decoration: const InputDecoration(
-                          labelText: "Reference no",
-                        ),
-                      ),
-                    ),
+                    _buildReferenceFieldWithLink(maxWidth),
                     const SizedBox(height: 12),
                     _buildNoteAndPurchaseType(),
                   ],
@@ -538,9 +541,6 @@ class _PaymentBodyState extends State<PaymentBody> {
   }
 
   Widget _buildCollectPaymentView() {
-    bool isCashSelected = widget.selectedPayment == "Cash";
-    bool isCardSelected = widget.selectedPayment == "Credit Sale";
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenWidth = MediaQuery.of(context).size.width;
@@ -698,10 +698,20 @@ class _PaymentBodyState extends State<PaymentBody> {
                                       width: double.infinity,
                                       child: Divider(),
                                     ),
-                                    if (isCashSelected)
+                                    if (widget.selectedPayment == "Cash")
                                       Expanded(child: _buildCashSection()),
-                                    if (isCardSelected)
+                                    if (widget.selectedPayment ==
+                                            "Credit Sale" ||
+                                        widget.selectedPayment == "Credit")
                                       Expanded(child: _buildCreditSaleFrame()),
+                                    if (widget.selectedPayment.isNotEmpty &&
+                                        widget.selectedPayment != "Cash" &&
+                                        widget.selectedPayment !=
+                                            "Credit Sale" &&
+                                        widget.selectedPayment != "Credit")
+                                      Expanded(
+                                        child: _buildOtherPaymentSection(),
+                                      ),
                                   ],
                                 )
                               : Row(
@@ -739,11 +749,14 @@ class _PaymentBodyState extends State<PaymentBody> {
                                             width: double.infinity,
                                             child: Divider(),
                                           ),
-                                          if (isCashSelected)
+                                          if (widget.selectedPayment == "Cash")
                                             Expanded(
                                               child: _buildCashSection(),
                                             ),
-                                          if (isCardSelected)
+                                          if (widget.selectedPayment ==
+                                                  "Credit Sale" ||
+                                              widget.selectedPayment ==
+                                                  "Credit")
                                             Expanded(
                                               child: Container(
                                                 padding: const EdgeInsets.all(
@@ -751,6 +764,19 @@ class _PaymentBodyState extends State<PaymentBody> {
                                                 ),
                                                 child: _buildCreditSaleFrame(),
                                               ),
+                                            ),
+                                          if (widget
+                                                  .selectedPayment
+                                                  .isNotEmpty &&
+                                              widget.selectedPayment !=
+                                                  "Cash" &&
+                                              widget.selectedPayment !=
+                                                  "Credit Sale" &&
+                                              widget.selectedPayment !=
+                                                  "Credit")
+                                            Expanded(
+                                              child:
+                                                  _buildOtherPaymentSection(),
                                             ),
                                         ],
                                       ),
@@ -782,6 +808,7 @@ class _PaymentBodyState extends State<PaymentBody> {
           CustomKeyboard(
             controller: _amount,
             onClose: _handleCheckout,
+            onPaymode: () {}, // Ensure Enter button shows
             onValueInput: (val) {
               if (_shouldClearAmountOnInput) {
                 _amount.text = val;
@@ -792,8 +819,32 @@ class _PaymentBodyState extends State<PaymentBody> {
             },
           ),
           const SizedBox(height: 16),
-          _buildNoteAndPurchaseType(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                _buildReferenceFieldWithLink(double.infinity),
+                const SizedBox(height: 12),
+                _buildNoteAndPurchaseType(),
+              ],
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildOtherPaymentSection() {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            _buildReferenceFieldWithLink(double.infinity),
+            const SizedBox(height: 12),
+            _buildNoteAndPurchaseType(),
+          ],
+        ),
       ),
     );
   }
@@ -1282,7 +1333,7 @@ class _PaymentBodyState extends State<PaymentBody> {
   }
 
   Widget _buildCommonAmountHeader(double maxWidth) {
-    bool isCash = widget.selectedPayment == "Cash";
+    bool hasSelection = widget.selectedPayment.isNotEmpty;
 
     return Column(
       children: [
@@ -1299,7 +1350,7 @@ class _PaymentBodyState extends State<PaymentBody> {
                 ),
               ),
             ),
-            if (isCash)
+            if (hasSelection)
               Row(
                 spacing: 8,
                 children: [
@@ -1345,9 +1396,7 @@ class _PaymentBodyState extends State<PaymentBody> {
               )
             else
               Text(
-                widget.selectedPayment.isEmpty
-                    ? "Rs 0.00"
-                    : "Rs ${widget.total.toStringAsFixed(2)}",
+                "Rs 0.00",
                 style: TextStyle(
                   fontSize: maxWidth < 400 ? 20 : 24,
                   fontWeight: FontWeight.bold,
@@ -1375,7 +1424,7 @@ class _PaymentBodyState extends State<PaymentBody> {
 
   String _getPaymentStatusLabel() {
     if (widget.selectedPayment.isEmpty) {
-      return "Balance Due ";
+      return "Return Amount ";
     }
     final paid = double.tryParse(widget.enteredAmount) ?? 0;
     final change = paid - widget.total;
@@ -1409,5 +1458,50 @@ class _PaymentBodyState extends State<PaymentBody> {
         timer.cancel();
       }
     });
+  }
+
+  Widget _buildReferenceFieldWithLink(double maxWidth) {
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _refController,
+              focusNode: _refFocusNode,
+              decoration: const InputDecoration(
+                labelText: "Reference no",
+                labelStyle: TextStyle(fontFamily: 'SanFrancisco'),
+              ),
+            ),
+          ),
+          TextButton(
+            style: ButtonStyle(
+              overlayColor: WidgetStateProperty.all(Colors.transparent),
+              backgroundColor: WidgetStateProperty.all(Colors.transparent),
+              foregroundColor: WidgetStateProperty.all(Colors.transparent),
+              side: WidgetStateProperty.all(
+                const BorderSide(color: Colors.grey, width: 2),
+              ),
+            ),
+            onPressed: () {},
+            child: Row(
+              spacing: 2,
+              children: [
+                Icon(Icons.connected_tv, color: Colors.grey.shade600, size: 17),
+                const Text(
+                  "Connect",
+                  style: TextStyle(
+                    fontFamily: 'SanFrancisco',
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

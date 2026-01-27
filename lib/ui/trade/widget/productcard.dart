@@ -180,18 +180,18 @@ class _ProductCardState extends State<ProductCard> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (widget.product.sku != null)
+                      if (widget.product.sku.isNotEmpty)
                         Text(
-                          "SKU: ${widget.product.sku ?? ""} ",
+                          "SKU: ${widget.product.sku} ",
                           style: TextStyle(
                             fontSize: 12,
                             fontFamily: 'SanFrancisco',
                             color: Colors.grey[500],
                           ),
                         ),
-                      if (widget.product.description != null)
+                      if (widget.product.description.isNotEmpty)
                         Text(
-                          widget.product.description ?? "",
+                          widget.product.description,
                           style: TextStyle(
                             fontSize: 12,
                             fontFamily: 'SanFrancisco',
@@ -203,7 +203,7 @@ class _ProductCardState extends State<ProductCard> {
                     ],
                   ),
                   Text(
-                    "Rs ${widget.product.price ?? ""}",
+                    "Rs ${widget.product.price}",
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
