@@ -15,7 +15,7 @@ class Product {
   final String unitAlias;
   final String costPrice;
   final String salesPrice;
-  final String isDiscountable;
+  final bool isDiscountable;
   final String itemWiseDiscount;
   final String requiredBatchExpiry;
   final String remainingStock;
@@ -131,6 +131,7 @@ class Product {
     String? sku,
     String? description,
     bool isWeightBased = false,
+    bool isDiscountable = false,
   }) {
     return Product(
       itemId: "0",
@@ -143,7 +144,7 @@ class Product {
       unitAlias: "",
       costPrice: "0",
       salesPrice: price.toString(),
-      isDiscountable: "No",
+      isDiscountable: false,
       itemWiseDiscount: "0",
       requiredBatchExpiry: "No",
       remainingStock: "0",
@@ -245,6 +246,7 @@ final List<Product> products = [
     sku: '123456',
     description: 'This is a cappuccino',
     color: const Color(0xFFFEF3C7),
+    isDiscountable: true,
   ),
   Product.mock(
     name: "Espresso",
@@ -254,6 +256,7 @@ final List<Product> products = [
     sku: '1256',
     description: 'This is a espresso',
     color: const Color(0xFFDDD6FE),
+    isDiscountable: true,
   ),
   Product.mock(
     name: "Caesar Salad",
@@ -263,6 +266,7 @@ final List<Product> products = [
     sku: '1256',
     description: 'This is a caesar salad',
     color: const Color(0xFFBBF7D0),
+    isDiscountable: true,
   ),
   Product.mock(
     name: "Margherita Pizza",
@@ -311,6 +315,7 @@ final List<Product> products = [
     category: "Beverages",
     image: "https://loremflickr.com/200/200/latte",
     color: const Color(0xFFE0F2FE),
+    isDiscountable: true,
   ),
   Product.mock(
     name: "Mocha",
@@ -332,6 +337,7 @@ final List<Product> products = [
     category: "Beverages",
     image: "https://loremflickr.com/200/200/lime,soda",
     color: const Color(0xFFD9F99D),
+    isDiscountable: true,
   ),
   Product.mock(
     name: "Grilled Chicken Sandwich",
@@ -339,6 +345,7 @@ final List<Product> products = [
     category: "Food",
     image: "https://loremflickr.com/200/200/sandwich",
     color: const Color(0xFFBFDBFE),
+    isDiscountable: true,
   ),
   Product.mock(
     name: "Chicken Burger",
@@ -360,6 +367,7 @@ final List<Product> products = [
     category: "Food",
     image: "https://loremflickr.com/200/200/biryani",
     color: const Color(0xFFFDE2E2),
+    isDiscountable: true,
   ),
   Product.mock(
     name: "Ice Cream Sundae",
@@ -395,6 +403,7 @@ final List<Product> products = [
     category: "Snacks",
     image: "https://loremflickr.com/200/200/nuggets",
     color: const Color(0xFFFDE68A),
+    isDiscountable: true,
   ),
   Product.mock(
     name: "Spring Rolls",
@@ -418,6 +427,7 @@ final List<Product> products = [
     image: "https://loremflickr.com/200/200/apple",
     color: const Color(0xFFFECACA),
     isWeightBased: true,
+    isDiscountable: true,
   ),
   Product.mock(
     name: "Grapes",
@@ -460,7 +470,10 @@ class OrderItem {
   String category;
   String? note;
   double? discount;
+  String? discountType;
+  bool? isDiscountable;
   bool isFree;
+  String? tax;
   OrderItem({
     required this.name,
     required this.quantity,
@@ -468,7 +481,10 @@ class OrderItem {
     required this.category,
     this.note,
     this.discount = 0.0,
+    this.discountType,
     this.isFree = false,
+    this.isDiscountable,
+    this.tax,
   });
   factory OrderItem.fromJson(Map<String, dynamic> json) => OrderItem(
     name: json["name"],
@@ -477,7 +493,10 @@ class OrderItem {
     category: json["category"],
     note: json["note"],
     discount: json["discount"]?.toDouble(),
+    discountType: json["discountType"],
     isFree: json["isFree"],
+    isDiscountable: json["isDiscountable"],
+    tax: json["tax"] ?? "8% VAT",
   );
 
   Map<String, dynamic> toJson() => {
@@ -487,7 +506,10 @@ class OrderItem {
     "category": category,
     "note": note,
     "discount": discount,
+    "discountType": discountType,
     "isFree": isFree,
+    "isDiscountable": isDiscountable,
+    "tax": tax,
   };
 }
 
@@ -498,6 +520,7 @@ class DraftOrder {
   final String customerAddress;
   final List<OrderItem> items;
   final DateTime timestamp;
+  final bool? isDiscountable;
 
   DraftOrder({
     required this.id,
@@ -506,6 +529,7 @@ class DraftOrder {
     required this.customerAddress,
     required this.items,
     required this.timestamp,
+    this.isDiscountable,
   });
 
   factory DraftOrder.fromJson(Map<String, dynamic> json) => DraftOrder(
@@ -517,6 +541,7 @@ class DraftOrder {
       json["items"].map((x) => OrderItem.fromJson(x)),
     ),
     timestamp: DateTime.parse(json["timestamp"]),
+    isDiscountable: json["isDiscountable"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -526,6 +551,7 @@ class DraftOrder {
     "customerAddress": customerAddress,
     "items": List<dynamic>.from(items.map((x) => x.toJson())),
     "timestamp": timestamp.toIso8601String(),
+    "isDiscountable": isDiscountable,
   };
 }
 

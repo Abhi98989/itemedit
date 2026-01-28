@@ -1,12 +1,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import 'package:itemedit/ui/trade/model/product_class.dart';
 import 'package:itemedit/ui/trade/model/party.dart';
 import 'widget/order_slidebar.dart';
 import 'widget/productarea.dart';
 import 'widget/payment_widget.dart';
+import 'store/local_store.dart';
+import 'widget/drawer.dart';
 
 class POSLandingPage extends StatefulWidget {
   const POSLandingPage({super.key});
@@ -30,6 +30,7 @@ class _POSLandingPageState extends State<POSLandingPage> {
   String customerBalance = "";
   String tipn = "";
   List<DraftOrder> draftOrders = [];
+  final LocalStore _localStore = LocalStore();
 
   void _showAddCustomerDialog(
     BuildContext context,
@@ -188,63 +189,12 @@ class _POSLandingPageState extends State<POSLandingPage> {
                                     ),
                                   ),
                                 ),
-                                // const SizedBox(width: 12),
-                                // OutlinedButton(
-                                //   onPressed: () => Navigator.pop(context),
-                                //   style: OutlinedButton.styleFrom(
-                                //     padding: const EdgeInsets.symmetric(
-                                //       horizontal: 24,
-                                //       vertical: 16,
-                                //     ),
-                                //     shape: RoundedRectangleBorder(
-                                //       borderRadius: BorderRadius.circular(4),
-                                //     ),
-                                //     side: BorderSide(
-                                //       color: Colors.grey.shade300,
-                                //     ),
-                                //     foregroundColor: Colors.black87,
-                                //   ),
-                                //   child: const Text(
-                                //     "Discard",
-                                //     style: TextStyle(
-                                //       fontWeight: FontWeight.bold,
-                                //       fontSize: 16,
-                                //       color: Colors.black,
-                                //       fontFamily: 'SanFrancisco',
-                                //     ),
-                                //   ),
-                                // ),
                               ],
                             ),
                           ],
                         ),
                       ),
                       const Divider(height: 1),
-
-                      // // Radio Selection
-                      // Padding(
-                      //   padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                      //   child: Row(
-                      //     children: [
-                      //       _buildRadioSelect(
-                      //         "Individual",
-                      //         selectedCustomerType,
-                      //         (val) {
-                      //           setDialogState(
-                      //             () => selectedCustomerType = val,
-                      //           );
-                      //         },
-                      //       ),
-                      //       const SizedBox(width: 20),
-                      //       _buildRadioSelect("Company", selectedCustomerType, (
-                      //         val,
-                      //       ) {
-                      //         setDialogState(() => selectedCustomerType = val);
-                      //       }),
-                      //     ],
-                      //   ),
-                      // ),
-
                       // Identity Section
                       Padding(
                         padding: const EdgeInsets.all(20),
@@ -271,41 +221,9 @@ class _POSLandingPageState extends State<POSLandingPage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  TextField(
-                                    controller: nameController,
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w400,
-                                      fontFamily: 'SanFrancisco',
-                                    ),
-                                    decoration: const InputDecoration(
-                                      hintText: "Name",
-                                      hintStyle: TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 20,
-                                        fontFamily: 'SanFrancisco',
-                                      ),
-                                      // border: UnderlineInputBorder(
-                                      //   borderSide: BorderSide(
-                                      //     color: Color(0xff008784),
-                                      //   ),
-                                      // ),
-                                      enabledBorder: UnderlineInputBorder(
-                                        borderSide: BorderSide(
-                                          color: Colors.grey,
-                                          width: 0.5,
-                                        ),
-                                      ),
-
-                                      contentPadding: EdgeInsets.only(
-                                        bottom: 8,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
                                   _buildIconField(
-                                    Icons.business,
-                                    "Company Name",
+                                    Icons.person_outlined,
+                                    "Name",
                                     companyController,
                                   ),
                                   _buildIconField(
@@ -478,49 +396,16 @@ class _POSLandingPageState extends State<POSLandingPage> {
     );
   }
 
-  Widget _buildRadioSelect(
-    String label,
-    String current,
-    Function(String) onChanged,
-  ) {
-    bool isSelected = label == current;
-    return InkWell(
-      onTap: () => onChanged(label),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 18,
-            height: 18,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isSelected ? const Color(0xff7CD23D) : Colors.black,
-                width: isSelected ? 5 : 1,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 14, fontFamily: 'SanFrancisco'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildIconField(
     IconData icon,
     String hint,
     TextEditingController controller,
   ) {
-    // Note: The icons parameter was mistakenly typed as 'Icons' instead of 'IconData'. Fixing it here.
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: Colors.black),
+          Icon(icon, size: 20, color: Colors.black),
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
@@ -529,11 +414,16 @@ class _POSLandingPageState extends State<POSLandingPage> {
                 hintText: hint,
                 hintStyle: TextStyle(
                   color: Colors.black,
-                  fontSize: 13,
+                  fontSize: 15,
                   fontFamily: 'SanFrancisco',
                 ),
                 isDense: true,
-                border: InputBorder.none,
+                border: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.transparent),
+                ),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey.shade200),
+                ),
                 contentPadding: const EdgeInsets.symmetric(vertical: 4),
               ),
               style: const TextStyle(fontSize: 13, fontFamily: 'SanFrancisco'),
@@ -730,8 +620,9 @@ class _POSLandingPageState extends State<POSLandingPage> {
 
   void _showCustomerSelectionDialog() {
     final TextEditingController searchController = TextEditingController();
+    String sortOption = 'default';
+    String filterDiscount = 'All';
     showDialog(
-      // barrierColor: Colors.transparent.withAlpha(10),
       barrierDismissible: false,
       context: context,
       builder: (context) {
@@ -742,8 +633,30 @@ class _POSLandingPageState extends State<POSLandingPage> {
               final searchQuery = searchController.text.toLowerCase();
               final name = customer.name.toLowerCase();
               final phone = customer.phone.toLowerCase();
-              return name.contains(searchQuery) || phone.contains(searchQuery);
+              // return name.contains(searchQuery) || phone.contains(searchQuery);
+              final matchesSearch =
+                  name.contains(searchQuery) || phone.contains(searchQuery);
+              if (!matchesSearch) return false;
+              if (filterDiscount != 'All') {
+                return customer.discountPer == filterDiscount;
+              }
+              return true;
             }).toList();
+            if (sortOption == 'az') {
+              filteredCustomers.sort(
+                (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+              );
+            } else if (sortOption == 'za') {
+              filteredCustomers.sort(
+                (a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()),
+              );
+            } else if (sortOption == 'newest') {
+              filteredCustomers.sort((a, b) {
+                int idA = int.tryParse(a.partyId) ?? 0;
+                int idB = int.tryParse(b.partyId) ?? 0;
+                return idB.compareTo(idA);
+              });
+            }
             return BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
               child: Dialog(
@@ -763,22 +676,27 @@ class _POSLandingPageState extends State<POSLandingPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () {
-                              searchController.dispose();
-                              Navigator.pop(context);
-                            },
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
-                          const Text(
-                            "Select Customer",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'SanFrancisco',
-                            ),
+                          Row(
+                            spacing: 16,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: () {
+                                  searchController.dispose();
+                                  Navigator.pop(context);
+                                },
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                              ),
+                              const Text(
+                                "Select Customer",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'SanFrancisco',
+                                ),
+                              ),
+                            ],
                           ),
                           TextButton(
                             onPressed: () {
@@ -787,7 +705,10 @@ class _POSLandingPageState extends State<POSLandingPage> {
                             child: Row(
                               children: const [
                                 Icon(Icons.add),
-                                Text("Add Customer"),
+                                Text(
+                                  "Add Customer",
+                                  style: TextStyle(fontFamily: 'SanFrancisco'),
+                                ),
                               ],
                             ),
                           ),
@@ -806,7 +727,6 @@ class _POSLandingPageState extends State<POSLandingPage> {
                                 },
                                 decoration: InputDecoration(
                                   isDense: true,
-
                                   hintText: "Search by name or phone number",
                                   hintStyle: TextStyle(
                                     color: Colors.grey.shade400,
@@ -818,6 +738,7 @@ class _POSLandingPageState extends State<POSLandingPage> {
                                     color: Colors.grey.shade600,
                                     size: 20,
                                   ),
+                                  suffixIconColor: Colors.grey.shade600,
                                   suffixIcon: searchController.text.isNotEmpty
                                       ? IconButton(
                                           icon: Icon(
@@ -878,14 +799,88 @@ class _POSLandingPageState extends State<POSLandingPage> {
                             SizedBox(
                               height: MediaQuery.of(context).size.height * 0.05,
                               width: MediaQuery.of(context).size.height * 0.05,
-                              child: IconButton(
-                                onPressed: () {},
+                              child: PopupMenuButton<String>(
+                                tooltip: "Filter by Discount",
                                 icon: Center(
-                                  child: const Icon(
-                                    Icons.filter_list,
-                                    size: 26,
+                                  child: Icon(
+                                    Icons.discount_sharp,
+                                    size: 20,
+                                    color: filterDiscount != 'All'
+                                        ? Colors.blue
+                                        : Colors.grey.shade600,
                                   ),
                                 ),
+                                onSelected: (val) {
+                                  setState(() {
+                                    filterDiscount = val;
+                                  });
+                                },
+                                itemBuilder: (context) {
+                                  final discounts =
+                                      customers
+                                          .map((e) => e.discountPer)
+                                          .toSet()
+                                          .toList()
+                                        ..sort(
+                                          (a, b) => (double.tryParse(a) ?? 0)
+                                              .compareTo(
+                                                double.tryParse(b) ?? 0,
+                                              ),
+                                        );
+                                  return [
+                                    const PopupMenuItem(
+                                      value: 'All',
+                                      child: Text('All Discounts'),
+                                    ),
+                                    ...discounts.map(
+                                      (d) => PopupMenuItem(
+                                        value: d,
+                                        child: Text('$d%'),
+                                      ),
+                                    ),
+                                  ];
+                                },
+                              ),
+                            ),
+                            VerticalDivider(
+                              color: Colors.grey[300],
+                              thickness: 1,
+                              indent: 5,
+                              endIndent: 5,
+                            ),
+                            SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.05,
+                              width: MediaQuery.of(context).size.height * 0.05,
+                              child: PopupMenuButton<String>(
+                                tooltip: "Sort Customers",
+                                icon: Center(
+                                  child: Icon(
+                                    Icons.filter_list,
+                                    size: 26,
+                                    color: sortOption != 'default'
+                                        ? Colors.blue
+                                        : Colors.grey.shade600,
+                                  ),
+                                ),
+                                onSelected: (val) {
+                                  setState(() {
+                                    sortOption = val;
+                                  });
+                                },
+                                itemBuilder: (context) => [
+                                  const PopupMenuItem(
+                                    value: 'az',
+                                    child: Text('Name (A-Z)'),
+                                  ),
+                                  const PopupMenuItem(
+                                    value: 'za',
+                                    child: Text('Name (Z-A)'),
+                                  ),
+                                  const PopupMenuItem(
+                                    value: 'newest',
+                                    child: Text('New Created'),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -1252,6 +1247,12 @@ class _POSLandingPageState extends State<POSLandingPage> {
   void clearItems() {
     setState(() {
       items.clear();
+      selectedCustomer = null;
+      isCustomerSelected = false;
+      customerName = "";
+      customerPhone = "";
+      customerAddress = "";
+      customerBalance = "";
     });
   }
 
@@ -1285,26 +1286,14 @@ class _POSLandingPageState extends State<POSLandingPage> {
   }
 
   Future<void> _loadDrafts() async {
-    final prefs = await SharedPreferences.getInstance();
-    final draftsJson = prefs.getString('saved_drafts');
-    if (draftsJson != null) {
-      try {
-        final List<dynamic> decoded = jsonDecode(draftsJson);
-        setState(() {
-          draftOrders = decoded
-              .map((json) => DraftOrder.fromJson(json))
-              .toList();
-        });
-      } catch (e) {
-        debugPrint("Error loading drafts: $e");
-      }
-    }
+    final drafts = await _localStore.loadDrafts();
+    setState(() {
+      draftOrders = drafts;
+    });
   }
 
   Future<void> _saveDrafts() async {
-    final prefs = await SharedPreferences.getInstance();
-    final draftsJson = jsonEncode(draftOrders.map((d) => d.toJson()).toList());
-    await prefs.setString('saved_drafts', draftsJson);
+    await _localStore.saveDrafts(draftOrders);
   }
 
   @override
@@ -1316,6 +1305,7 @@ class _POSLandingPageState extends State<POSLandingPage> {
     final tax = subtotal * 0.13;
     final total = subtotal + tax;
     return Scaffold(
+      drawer: const CustomDrawer(),
       backgroundColor: Colors.white,
       body: Row(
         children: [
@@ -1575,7 +1565,10 @@ class _POSLandingPageState extends State<POSLandingPage> {
                                                   items: List.from(items),
                                                   timestamp: DateTime.now(),
                                                 );
-                                                draftOrders.add(newDraft);
+                                                draftOrders = [
+                                                  ...draftOrders,
+                                                  newDraft,
+                                                ];
                                                 _saveDrafts();
                                                 items.clear();
                                                 customerName = "";
@@ -1583,26 +1576,6 @@ class _POSLandingPageState extends State<POSLandingPage> {
                                                 customerAddress = "";
                                                 customerBalance = "";
                                               });
-
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
-                                                const SnackBar(
-                                                  content: Text(
-                                                    "Draft saved successfully",
-                                                    style: TextStyle(
-                                                      fontFamily:
-                                                          'SanFrancisco',
-                                                    ),
-                                                  ),
-                                                  backgroundColor: Color(
-                                                    0xff7CD23D,
-                                                  ),
-                                                  duration: Duration(
-                                                    seconds: 2,
-                                                  ),
-                                                ),
-                                              );
                                             },
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: const Color(

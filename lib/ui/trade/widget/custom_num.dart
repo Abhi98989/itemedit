@@ -101,20 +101,21 @@ class _CustomKeyboardState extends State<CustomKeyboard> {
                       _buildNumRow(['4', '5', '6']),
                       _buildNumRow(['1', '2', '3']),
                       // Bottom row with wide 0 and dot
-                      SizedBox(
-                        height: 60,
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 6.0),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _buildKeyButton("."),
-                              _buildKeyButton("0"),
-                              Expanded(child: _buildKeyButton("00")),
-                            ],
-                          ),
-                        ),
-                      ),
+                      _buildNumRow(['.', '0']),
+                      // SizedBox(
+                      //   height: 60,
+                      //   child: Padding(
+                      //     padding: const EdgeInsets.only(bottom: 6.0),
+                      //     child: Row(
+                      //       crossAxisAlignment: CrossAxisAlignment.stretch,
+                      //       children: [
+                      //         _buildKeyButton("."),
+                      //         _buildKeyButton("0"),
+                      //         _buildKeyButton("00"),
+                      //       ],
+                      //     ),
+                      //   ),
+                      // ),
                     ],
                   ),
                 ),
@@ -142,11 +143,6 @@ class _CustomKeyboardState extends State<CustomKeyboard> {
                         ),
                       const SizedBox(height: 8),
                       if (widget.onPaymode == null && widget.onWidget == null)
-                        //     widget.onCoupon != null ||
-                        //     widget.onCharges != null ||
-                        //     widget.onPaymode == null ||
-                        //     widget.onTips != null ||
-                        //     widget.onWidget == null)
                         Expanded(
                           child: _buildActionButton(
                             label: "Enter",

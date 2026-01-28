@@ -2,6 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:itemedit/ui/trade/widget/custom_num.dart';
 import '../model/product_class.dart';
+import '../store/local_store.dart';
+import '../model/discount_list.dart';
 import 'orderitemtiler.dart';
 
 class OrderSidebar extends StatefulWidget {
@@ -49,21 +51,37 @@ class _OrderSidebarState extends State<OrderSidebar> {
 
   // Store dynamic charges
   final List<Map<String, dynamic>> _chargeTypes = [];
-  final List<Map<String, dynamic>> _customDiscounts = [
-    {"name": "Weekend Offer", "value": 10.0, "type": "percentage"},
-    {"name": "New Year Offer", "value": 35.0, "type": "percentage"},
-  ];
   double _orderTip = 0;
   bool _isDiscountPercentage = false;
   bool _isTipPercentage = false;
-
-  // Track highlighted item for animation
+  List<DraftOrder> draftOrders = [];
+  final LocalStore _localStore = LocalStore();
   String? _highlightedItemName;
+  final discounts = CustomDiscount.discountList;
+  String selectedDiscountlist = "";
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDrafts();
+  }
 
   @override
   void didUpdateWidget(OrderSidebar oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // Sync draft orders if they changed in the parent
+    final bool draftsChanged =
+        oldWidget.draftOrders.length != widget.draftOrders.length ||
+        (widget.draftOrders.isNotEmpty &&
+            oldWidget.draftOrders.isNotEmpty &&
+            (oldWidget.draftOrders.first.id != widget.draftOrders.first.id ||
+                oldWidget.draftOrders.last.id != widget.draftOrders.last.id));
 
+    if (draftsChanged) {
+      setState(() {
+        draftOrders = widget.draftOrders;
+      });
+    }
     // Detect if items list changed (new item added or reordered)
     if (widget.items.isNotEmpty &&
         (oldWidget.items.isEmpty ||
@@ -93,13 +111,9 @@ class _OrderSidebarState extends State<OrderSidebar> {
     String tempNote = item.note ?? "";
     double tempDiscount = item.discount ?? 0;
     bool tempIsFree = item.isFree;
-    // bool discountTypeA = false;
-    // bool discountTypeB = false;
     bool applyBeforeTax = true;
     String? offerType;
-
     final noteController = TextEditingController(text: tempNote);
-
     showDialog(
       barrierDismissible: false,
       context: context,
@@ -116,7 +130,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                   borderRadius: BorderRadius.circular(3),
                 ),
                 child: Container(
-                  width: 420,
+                  width: 500,
                   padding: const EdgeInsets.all(20),
                   child: SingleChildScrollView(
                     child: Column(
@@ -195,7 +209,11 @@ class _OrderSidebarState extends State<OrderSidebar> {
                         Center(
                           child: const Text(
                             "Quantity",
-                            style: TextStyle(fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 17,
+                              fontFamily: 'SanFrancisco',
+                            ),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -254,44 +272,52 @@ class _OrderSidebarState extends State<OrderSidebar> {
                         /// NOTE
                         TextField(
                           controller: noteController,
-                          decoration: const InputDecoration(labelText: "Note"),
+                          decoration: const InputDecoration(
+                            labelText: "Note",
+                            labelStyle: TextStyle(
+                              fontFamily: 'SanFrancisco',
+                              fontSize: 13,
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 20),
-
-                        /// APPLY OFFER
-                        const Text(
-                          "Apply Offer",
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 8),
                         Row(
                           children: [
-                            Expanded(
-                              child: _offerTypeButton(
-                                context,
-                                "Discount",
-                                "discount",
-                                offerType,
-                                (value) => setDialogState(() {
-                                  offerType = value;
-                                  tempIsFree = false;
-                                  tempDiscount = 0;
-                                }),
+                            const Text(
+                              "Apply Offer",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                                fontFamily: 'SanFrancisco',
                               ),
                             ),
                             const SizedBox(width: 12),
-                            Expanded(
-                              child: _offerTypeButton(
-                                context,
-                                "Free",
-                                "free",
-                                offerType,
-                                (value) => setDialogState(() {
-                                  offerType = value;
-                                  tempIsFree = true;
-                                  tempDiscount = 0;
-                                }),
-                              ),
+                            Wrap(
+                              spacing: 8,
+                              children: [
+                                ChoiceChip(
+                                  label: const Text("Discount"),
+                                  selected: offerType == "discount",
+                                  backgroundColor: Colors.white,
+                                  selectedColor: Colors.grey.shade300,
+                                  onSelected: (_) => setDialogState(() {
+                                    offerType = "discount";
+                                    tempIsFree = false;
+                                    tempDiscount = 0;
+                                  }),
+                                ),
+                                ChoiceChip(
+                                  label: const Text("Free"),
+                                  selected: offerType == "free",
+                                  backgroundColor: Colors.white,
+                                  selectedColor: Colors.grey.shade300,
+                                  onSelected: (_) => setDialogState(() {
+                                    offerType = "free";
+                                    tempIsFree = true;
+                                    tempDiscount = 0;
+                                  }),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -315,7 +341,10 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                 const Expanded(
                                   child: Text(
                                     "This item will be shown as FREE on the receipt.",
-                                    style: TextStyle(fontSize: 13),
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontFamily: 'SanFrancisco',
+                                    ),
                                   ),
                                 ),
                               ],
@@ -328,31 +357,130 @@ class _OrderSidebarState extends State<OrderSidebar> {
                           const SizedBox(height: 16),
                           Row(
                             children: [
-                              const Text(
-                                "Discount Apply:",
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                              Expanded(
-                                child: ChoiceChip(
-                                  label: const Text("Before Tax"),
-                                  selected: applyBeforeTax,
-                                  onSelected: (_) => setDialogState(() {
-                                    applyBeforeTax = true;
-                                  }),
-                                ),
-                              ),
-                              Expanded(
-                                child: ChoiceChip(
-                                  label: const Text("After Tax"),
-                                  selected: !applyBeforeTax,
-                                  onSelected: (_) => setDialogState(() {
-                                    applyBeforeTax = false;
-                                  }),
-                                ),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  const Text(
+                                    "Discount Apply",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 16,
+                                      fontFamily: 'SanFrancisco',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: ChoiceChip(
+                                      label: const Text(
+                                        "Before Tax",
+                                        style: TextStyle(
+                                          fontFamily: 'SanFrancisco',
+                                        ),
+                                      ),
+                                      backgroundColor: Colors.white,
+                                      selectedColor: Colors.grey.shade300,
+                                      selected: applyBeforeTax,
+                                      onSelected: (_) => setDialogState(() {
+                                        applyBeforeTax = true;
+                                      }),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: ChoiceChip(
+                                      label: const Text(
+                                        "After Tax",
+                                        style: TextStyle(
+                                          fontFamily: 'SanFrancisco',
+                                        ),
+                                      ),
+                                      backgroundColor: Colors.white,
+                                      selectedColor: Colors.grey.shade300,
+                                      selected: !applyBeforeTax,
+                                      onSelected: (_) => setDialogState(() {
+                                        applyBeforeTax = false;
+                                      }),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
                           const SizedBox(height: 9),
+                          Text(
+                            "Discount list",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontFamily: 'SanFrancisco',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 9),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: discounts.map((discount) {
+                              final bool isPercentage =
+                                  discount.type == 'percentage';
+                              final bool isSelected =
+                                  selectedDiscountlist == discount.name;
+
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 8.0),
+                                child: FilterChip(
+                                  label: SizedBox(
+                                    width: 150,
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.discount, size: 14),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          '${discount.name} (${discount.value} ${isPercentage ? '%' : 'Rs'})',
+                                          style: const TextStyle(fontSize: 10),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  selected: isSelected,
+
+                                  // 🎨 Colors
+                                  backgroundColor: Colors.white,
+                                  selectedColor: Colors.grey.shade300,
+                                  checkmarkColor: Colors.black,
+                                  side: const BorderSide(color: Colors.black12),
+
+                                  onSelected: (bool selected) {
+                                    setDialogState(() {
+                                      if (selected) {
+                                        selectedDiscountlist = discount.name;
+
+                                        offerType = "discount";
+                                        tempIsFree = false;
+
+                                        if (isPercentage) {
+                                          double factor = discount.value;
+                                          if (factor >= 1.0) factor /= 100;
+                                          tempDiscount = subtotal * factor;
+                                          item.discountType = "percentage";
+                                        } else {
+                                          tempDiscount =
+                                              discount.value * tempQty;
+                                          item.discountType = "amount";
+                                        }
+
+                                        // noteController.text = discount.name;
+                                      } else {
+                                        // selectedDiscountlist = null;
+                                        tempDiscount = 0;
+                                        item.discountType = null;
+                                        // noteController.text = "";
+                                      }
+                                    });
+                                  },
+                                ),
+                              );
+                            }).toList(),
+                          ),
 
                           /// DISCOUNT INPUTS
                           Row(
@@ -366,6 +494,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                       final p = double.tryParse(v) ?? 0;
                                       setDialogState(() {
                                         tempDiscount = subtotal * p / 100;
+                                        item.discountType = "percentage";
                                       });
                                     }),
                                     const SizedBox(height: 4),
@@ -390,6 +519,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                       final p = double.tryParse(v) ?? 0;
                                       setDialogState(() {
                                         tempDiscount = p * tempQty;
+                                        item.discountType = "amount";
                                       });
                                     }),
                                     const SizedBox(height: 4),
@@ -473,7 +603,6 @@ class _OrderSidebarState extends State<OrderSidebar> {
   }
 
   // Helper widgets
-
   Widget _circleButton(IconData icon, VoidCallback onPressed) {
     return Container(
       decoration: BoxDecoration(
@@ -481,34 +610,6 @@ class _OrderSidebarState extends State<OrderSidebar> {
         border: Border.all(color: Colors.grey.shade300, width: 2),
       ),
       child: IconButton(icon: Icon(icon), onPressed: onPressed, iconSize: 20),
-    );
-  }
-
-  Widget _offerTypeButton(
-    BuildContext context,
-    String label,
-    String value,
-    String? groupValue,
-    ValueChanged<String?> onChanged,
-  ) {
-    final bool isSelected = groupValue == value;
-    return Row(
-      children: [
-        Radio<String>(
-          value: value,
-          groupValue: groupValue,
-          onChanged: onChanged,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: isSelected ? Theme.of(context).primaryColor : Colors.black87,
-          ),
-        ),
-      ],
     );
   }
 
@@ -569,7 +670,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
           builder: (context, setSheetState) {
             return Container(
               color: Colors.white,
-              height: MediaQuery.of(context).size.height * 0.4,
+              height: MediaQuery.of(context).size.height * 0.5,
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
@@ -585,7 +686,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
-                            vertical: 10,
+                            vertical: 4,
                           ),
                           decoration: const BoxDecoration(
                             border: Border(
@@ -651,11 +752,12 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                   Text(isPercentage ? "Rs" : "%"),
                                 ],
                               ),
-                              const SizedBox(height: 20),
                               const SizedBox(height: 8),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                children: _customDiscounts.map((discount) {
+                                children: discounts.map((discount) {
+                                  final bool isPercentage =
+                                      discount.type == 'percentage';
                                   return Padding(
                                     padding: const EdgeInsets.only(bottom: 8.0),
                                     child: FilterChip(
@@ -663,14 +765,22 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                         width: double.infinity,
                                         child: Row(
                                           mainAxisAlignment:
-                                              MainAxisAlignment.spaceEvenly,
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Icon(Icons.discount, size: 14),
-                                            Text(
-                                              "${discount['name']} (${discount['value']}${discount['type'] == 'percentage' ? '%' : 'Rs'})",
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                              ),
+                                            Row(
+                                              children: [
+                                                const Icon(
+                                                  Icons.discount,
+                                                  size: 14,
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  '${discount.name} (${discount.value} ${isPercentage ? '%' : 'Rs'})',
+                                                  style: const TextStyle(
+                                                    fontSize: 10,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                             TextButton(
                                               onPressed: () {
@@ -683,6 +793,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                                   _isDiscountPercentage =
                                                       isPercentage;
                                                 });
+                                                Navigator.pop(context);
                                               },
                                               child: const Text(
                                                 "Apply",
@@ -697,10 +808,10 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                       selected: false,
                                       onSelected: (bool selected) {
                                         setSheetState(() {
-                                          isPercentage =
-                                              discount['type'] == 'percentage';
-                                          tempDiscount = discount['value'];
-                                          controller.text = discount['value']
+                                          var isPercentage =
+                                              discount.type == 'percentage';
+                                          tempDiscount = discount.value;
+                                          controller.text = discount.value
                                               .toString();
                                         });
                                       },
@@ -1365,7 +1476,12 @@ class _OrderSidebarState extends State<OrderSidebar> {
           IntrinsicHeight(
             child: Row(
               children: [
-                const Icon(Icons.menu, color: Colors.grey, size: 26),
+                IconButton(
+                  icon: const Icon(Icons.menu, color: Colors.grey, size: 26),
+                  onPressed: () {
+                    Scaffold.of(context).openDrawer();
+                  },
+                ),
                 VerticalDivider(
                   color: Colors.grey[300],
                   thickness: 1,
@@ -1391,16 +1507,20 @@ class _OrderSidebarState extends State<OrderSidebar> {
                 Stack(
                   children: [
                     IconButton(
-                      onPressed: () => _showDraftsDialog(context),
+                      onPressed: () async {
+                        await _loadDrafts();
+                        // ignore: use_build_context_synchronously
+                        _showDraftsDialog(context);
+                      },
                       icon: Icon(
                         Icons.drafts,
-                        color: widget.draftOrders.isNotEmpty
+                        color: draftOrders.isNotEmpty
                             ? const Color(0xff7CD23D)
                             : Colors.grey,
                         size: 26,
                       ),
                     ),
-                    if (widget.draftOrders.isNotEmpty)
+                    if (draftOrders.isNotEmpty)
                       Positioned(
                         right: 8,
                         top: 8,
@@ -1415,7 +1535,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                             minHeight: 14,
                           ),
                           child: Text(
-                            '${widget.draftOrders.length}',
+                            '${draftOrders.length}',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 10,
@@ -1689,23 +1809,39 @@ class _OrderSidebarState extends State<OrderSidebar> {
     );
   }
 
+  //load draft
+  Future<void> _loadDrafts() async {
+    final drafts = await _localStore.loadDrafts();
+    setState(() {
+      draftOrders = drafts;
+    });
+  }
+
+  // delete draft
+  Future<void> _removeDraft(String draftId) async {
+    await _localStore.removeDraft(draftId);
+    await _loadDrafts();
+  }
+
   void _showDraftsDialog(BuildContext context) {
+    final TextEditingController searchController = TextEditingController();
     DraftOrder? selectedDraft;
     String searchQuery = "";
-
     showDialog(
       barrierDismissible: false,
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            final filteredDrafts = widget.draftOrders.where((draft) {
+            final filteredDrafts = draftOrders.where((draft) {
               final query = searchQuery.toLowerCase();
               return draft.customerName.toLowerCase().contains(query) ||
                   draft.id.contains(query) ||
-                  draft.customerPhone.contains(query);
+                  draft.customerPhone.contains(query) ||
+                  draft.items.any(
+                    (item) => item.name.toLowerCase().contains(query),
+                  );
             }).toList();
-
             return Dialog(
               backgroundColor: Colors.white,
               insetPadding: const EdgeInsets.symmetric(
@@ -1715,8 +1851,8 @@ class _OrderSidebarState extends State<OrderSidebar> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: Container(
-                width: 1100,
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.8,
                 height: MediaQuery.of(context).size.height * 0.85,
                 child: Column(
                   children: [
@@ -1731,7 +1867,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                         children: [
                           // Search Box
                           Expanded(
-                            flex: 3,
+                            flex: 2,
                             child: Container(
                               height: 36,
                               decoration: BoxDecoration(
@@ -1740,19 +1876,36 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                 border: Border.all(color: Colors.grey.shade300),
                               ),
                               child: TextField(
+                                controller: searchController,
                                 onChanged: (val) =>
                                     setDialogState(() => searchQuery = val),
-                                decoration: const InputDecoration(
+                                decoration: InputDecoration(
                                   hintText: "Search Orders...",
                                   hintStyle: TextStyle(
                                     fontSize: 13,
                                     color: Colors.grey,
+                                    fontFamily: 'SanFrancisco',
                                   ),
                                   prefixIcon: Icon(
                                     Icons.search,
                                     size: 18,
                                     color: Colors.grey,
                                   ),
+                                  suffixIcon: searchController.text.isNotEmpty
+                                      ? IconButton(
+                                          icon: Icon(
+                                            Icons.clear,
+                                            color: Colors.grey.shade600,
+                                            size: 20,
+                                          ),
+                                          onPressed: () {
+                                            searchController.clear();
+                                            setState(() {});
+                                          },
+                                        )
+                                      : null,
+                                  filled: true,
+                                  fillColor: Colors.grey.shade50,
                                   border: InputBorder.none,
                                   isDense: true,
                                   contentPadding: EdgeInsets.symmetric(
@@ -1768,19 +1921,16 @@ class _OrderSidebarState extends State<OrderSidebar> {
                           ),
                           const Spacer(),
                           Text(
-                            "${filteredDrafts.length} / ${widget.draftOrders.length}",
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
+                            "${filteredDrafts.length} / ${draftOrders.length}",
+                            style: const TextStyle(color: Colors.black),
                           ),
                           const SizedBox(width: 12),
                           IconButton(
                             onPressed: () => Navigator.pop(context),
                             icon: const Icon(
                               Icons.close,
-                              size: 20,
-                              color: Colors.black54,
+                              size: 28,
+                              color: Colors.black,
                             ),
                           ),
                         ],
@@ -1793,8 +1943,8 @@ class _OrderSidebarState extends State<OrderSidebar> {
                         children: [
                           // Left Panel: Order List
                           Expanded(
-                            flex: 7,
-                            child: widget.draftOrders.isEmpty
+                            flex: 2,
+                            child: draftOrders.isEmpty
                                 ? const Center(
                                     child: Text(
                                       "No saved drafts found",
@@ -1819,7 +1969,6 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                         (sum, item) =>
                                             sum + (item.price * item.quantity),
                                       );
-
                                       return InkWell(
                                         onTap: () => setDialogState(
                                           () => selectedDraft = draft,
@@ -1835,27 +1984,34 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                             vertical: 12,
                                           ),
                                           child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               // Date & Time
                                               SizedBox(
-                                                width: 80,
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
+                                                width: 120,
+                                                child: Row(
+                                                  spacing: 10,
                                                   children: [
                                                     Text(
                                                       "${draft.timestamp.month}/${draft.timestamp.day}/${draft.timestamp.year}",
                                                       style: const TextStyle(
-                                                        fontSize: 12,
                                                         fontWeight:
                                                             FontWeight.bold,
+                                                        fontFamily:
+                                                            'SanFrancisco',
                                                       ),
                                                     ),
                                                     Text(
                                                       "${draft.timestamp.hour.toString().padLeft(2, '0')}:${draft.timestamp.minute.toString().padLeft(2, '0')}",
                                                       style: const TextStyle(
-                                                        fontSize: 11,
-                                                        color: Colors.grey,
+                                                        color: Colors.black,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontFamily:
+                                                            'SanFrancisco',
                                                       ),
                                                     ),
                                                   ],
@@ -1863,44 +2019,51 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                               ),
                                               // Reference / Table
                                               SizedBox(
-                                                width: 120,
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
+                                                width: 140,
+                                                child: Row(
+                                                  spacing: 10,
                                                   children: [
                                                     Text(
                                                       "Order ID",
                                                       style: const TextStyle(
-                                                        fontSize: 12,
                                                         fontWeight:
                                                             FontWeight.bold,
+                                                        fontFamily:
+                                                            'SanFrancisco',
                                                       ),
                                                     ),
                                                     Text(
                                                       "#${draft.id.substring(draft.id.length - 6)}",
                                                       style: const TextStyle(
-                                                        fontSize: 11,
-                                                        color: Colors.grey,
+                                                        color: Colors.black,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontFamily:
+                                                            'SanFrancisco',
                                                       ),
                                                     ),
                                                   ],
                                                 ),
                                               ),
                                               // Customer
-                                              Expanded(
+                                              SizedBox(
+                                                width: 220,
                                                 child: Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.start,
                                                   crossAxisAlignment:
                                                       CrossAxisAlignment.start,
                                                   children: [
                                                     Text(
                                                       draft.customerName.isEmpty
-                                                          ? "Walk-in Customer"
+                                                          ? "Party not selected"
                                                           : draft.customerName
                                                                 .toUpperCase(),
                                                       style: const TextStyle(
-                                                        fontSize: 12,
                                                         fontWeight:
                                                             FontWeight.bold,
+                                                        fontFamily:
+                                                            'SanFrancisco',
                                                       ),
                                                       maxLines: 1,
                                                       overflow:
@@ -1911,55 +2074,45 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                                           ? "${draft.items.length} Item"
                                                           : "${draft.items.length} Items",
                                                       style: const TextStyle(
-                                                        fontSize: 11,
-                                                        color: Colors.grey,
+                                                        color: Colors.black,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontFamily:
+                                                            'SanFrancisco',
                                                       ),
                                                     ),
                                                   ],
                                                 ),
                                               ),
                                               // Amount
+                                              Text(
+                                                "Rs ${total.toStringAsFixed(2)}",
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black,
+                                                  fontFamily: 'SanFrancisco',
+                                                ),
+                                              ),
                                               SizedBox(
-                                                width: 100,
-                                                child: Text(
-                                                  "${total.toStringAsFixed(2)} Rs",
-                                                  style: const TextStyle(
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.black,
+                                                child: IconButton(
+                                                  icon: const Icon(
+                                                    Icons.delete,
+                                                    size: 20,
+                                                    color: Colors.red,
                                                   ),
-                                                  textAlign: TextAlign.right,
+                                                  onPressed: () async {
+                                                    await _removeDraft(
+                                                      draft.id,
+                                                    );
+                                                    setDialogState(() {
+                                                      // If the deleted draft was selected, clear selection
+                                                      if (selectedDraft?.id ==
+                                                          draft.id) {
+                                                        selectedDraft = null;
+                                                      }
+                                                    });
+                                                  },
                                                 ),
-                                              ),
-                                              const SizedBox(width: 20),
-                                              // Status
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 10,
-                                                      vertical: 4,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color: const Color(
-                                                    0xff7CD23D,
-                                                  ).withValues(alpha: 0.1),
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                ),
-                                                child: const Text(
-                                                  "Ongoing",
-                                                  style: TextStyle(
-                                                    fontSize: 11,
-                                                    color: Color(0xff7CD23D),
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ),
-                                              const SizedBox(width: 12),
-                                              const Icon(
-                                                Icons.delete_outline,
-                                                size: 18,
-                                                color: Colors.grey,
                                               ),
                                             ],
                                           ),
@@ -1970,7 +2123,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                           ),
                           // Right Panel: Order Summary
                           Container(
-                            width: 350,
+                            width: 370,
                             padding: const EdgeInsets.all(0),
                             decoration: BoxDecoration(
                               color: Colors.white,
@@ -2005,27 +2158,6 @@ class _OrderSidebarState extends State<OrderSidebar> {
       },
     );
   }
-  // Widget _buildDraftFilterChip(String label, bool isActive, {Color? color}) {
-  //   return Container(
-  //     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-  //     decoration: BoxDecoration(
-  //       color: isActive ? Colors.cyan.shade50 : (color ?? Colors.transparent),
-  //       border: Border.all(
-  //         color: isActive ? Colors.cyan.shade200 : Colors.grey.shade300,
-  //       ),
-  //       borderRadius: BorderRadius.circular(4),
-  //     ),
-  //     child: Text(
-  //       label,
-  //       style: TextStyle(
-  //         fontSize: 12,
-  //         fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-  //         color: isActive ? Colors.cyan.shade700 : Colors.black87,
-  //         fontFamily: 'SanFrancisco',
-  //       ),
-  //     ),
-  //   );
-  // }
 
   Widget _buildDraftSummaryPanel(DraftOrder draft, BuildContext context) {
     final subtotal = draft.items.fold(
@@ -2050,42 +2182,82 @@ class _OrderSidebarState extends State<OrderSidebar> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "${item.quantity.toInt()} ",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            item.name,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Colors.black87,
-                            ),
+                          Row(
+                            spacing: 16,
+                            children: [
+                              Text(
+                                item.name,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.black87,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'SanFrancisco',
+                                ),
+                              ),
+                              Text(
+                                "X ${item.quantity.toInt()} ",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  fontFamily: 'SanFrancisco',
+                                ),
+                              ),
+                            ],
                           ),
                           if (item.note != null && item.note!.isNotEmpty)
                             Text(
                               "- ${item.note}",
                               style: const TextStyle(
                                 fontSize: 11,
-                                color: Colors.grey,
+                                color: Colors.black,
                                 fontStyle: FontStyle.italic,
+                                fontFamily: 'SanFrancisco',
                               ),
+                            ),
+                          if (item.isFree == true)
+                            Text(
+                              "- Free",
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.green,
+                                fontStyle: FontStyle.italic,
+                                fontFamily: 'SanFrancisco',
+                              ),
+                            ),
+                          if (item.isDiscountable == true)
+                            Icon(
+                              Icons.discount,
+                              size: 18,
+                              color: Colors.orange,
                             ),
                         ],
                       ),
                     ),
-                    Text(
-                      (item.price * item.quantity).toStringAsFixed(2) + " Rs",
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Column(
+                      children: [
+                        Text(
+                          "Rs ${(item.price * item.quantity).toStringAsFixed(2)}",
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'SanFrancisco',
+                          ),
+                        ),
+                        if (item.tax != null)
+                          Text(
+                            "Rs ${(item.tax)}",
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.black,
+                              fontStyle: FontStyle.italic,
+                              fontFamily: 'SanFrancisco',
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),
@@ -2113,11 +2285,19 @@ class _OrderSidebarState extends State<OrderSidebar> {
                 children: [
                   const Text(
                     "Taxes",
-                    style: TextStyle(fontSize: 13, color: Colors.grey),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.black,
+                      fontFamily: 'SanFrancisco',
+                    ),
                   ),
                   Text(
-                    tax.toStringAsFixed(2) + " Rs",
-                    style: const TextStyle(fontSize: 13),
+                    "Rs ${tax.toStringAsFixed(2)}",
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.black,
+                      fontFamily: 'SanFrancisco',
+                    ),
                   ),
                 ],
               ),
@@ -2127,14 +2307,20 @@ class _OrderSidebarState extends State<OrderSidebar> {
                 children: [
                   const Text(
                     "Total",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                      fontFamily: 'SanFrancisco',
+                    ),
                   ),
                   Text(
-                    total.toStringAsFixed(2) + " Rs",
+                    "Rs ${total.toStringAsFixed(2)}",
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
+                      fontFamily: 'SanFrancisco',
                     ),
                   ),
                 ],
@@ -2158,7 +2344,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                   elevation: 0,
                 ),
                 child: const Text(
-                  "Proceed to pay",
+                  "Create Invoice",
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

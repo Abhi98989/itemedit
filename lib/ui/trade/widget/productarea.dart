@@ -27,7 +27,7 @@ class MainProductArea extends StatefulWidget {
     required this.onScanClick,
     required this.onMoreClick,
     required this.onDeleteClick,
-    required this.price, 
+    required this.price,
   });
 
   @override

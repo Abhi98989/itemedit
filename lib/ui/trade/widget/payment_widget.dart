@@ -148,7 +148,7 @@ class _PaymentBodyState extends State<PaymentBody> {
 
   void _handleCheckout() {
     setState(() {
-      _isPaymentSuccess = false;
+      _isPaymentSuccess = true;
     });
   }
 
