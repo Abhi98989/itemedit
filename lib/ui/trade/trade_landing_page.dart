@@ -29,9 +29,11 @@ class _POSLandingPageState extends State<POSLandingPage> {
   String invoiceNumber = "";
   String customerBalance = "";
   String tipn = "";
+  bool isPaymentSuccess = false;
+
   List<DraftOrder> draftOrders = [];
   final LocalStore _localStore = LocalStore();
-
+  // add customer dialog
   void _showAddCustomerDialog(
     BuildContext context,
     StateSetter setSelectionState,
@@ -49,13 +51,14 @@ class _POSLandingPageState extends State<POSLandingPage> {
     final customerCodeController = TextEditingController();
     final nirController = TextEditingController();
     final balanceController = TextEditingController();
-    final companyController = TextEditingController();
-    final jobPositionController = TextEditingController();
-    final websiteController = TextEditingController();
+    // final jobPositionController = TextEditingController();
+    // final websiteController = TextEditingController();
     final tagsController = TextEditingController();
+    final TextEditingController dobController = TextEditingController();
 
     String selectedCustomerType = "Individual";
     String selectedBalanceType = "To receive";
+    String? selectedType;
 
     showDialog(
       barrierDismissible: false,
@@ -63,329 +66,365 @@ class _POSLandingPageState extends State<POSLandingPage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            return Dialog(
-              backgroundColor: Colors.white,
-              insetPadding: const EdgeInsets.symmetric(
-                horizontal: 40,
-                vertical: 24,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Container(
-                width: 1000,
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.9,
+            void onTypeChanged(String val) {
+              setDialogState(() {
+                selectedType = val;
+              });
+            }
+
+            return BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+              child: Dialog(
+                backgroundColor: Colors.white,
+                insetPadding: const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 24,
                 ),
-                child: DefaultTabController(
-                  length: 4,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 16, 12, 12),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              spacing: 16,
-                              children: [
-                                IconButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  icon: const Icon(
-                                    Icons.close,
-                                    color: Colors.black,
-                                    size: 20,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Container(
+                  width: 1000,
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.9,
+                  ),
+                  child: DefaultTabController(
+                    length: 2,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 16, 12, 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                spacing: 16,
+                                children: [
+                                  IconButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    icon: const Icon(
+                                      Icons.close,
+                                      color: Colors.black,
+                                      size: 20,
+                                    ),
                                   ),
-                                ),
-                                const Text(
-                                  "Create Customer",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black,
+                                  const Text(
+                                    "Create Customer",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                ElevatedButton(
-                                  onPressed: () {
-                                    if (nameController.text.isEmpty ||
-                                        phoneController.text.isEmpty) {
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      if (nameController.text.isEmpty ||
+                                          phoneController.text.isEmpty) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              "Name and Phone are required",
+                                            ),
+                                          ),
+                                        );
+                                        return;
+                                      }
+                                      final newCustomer = Customer(
+                                        partyId: DateTime.now()
+                                            .millisecondsSinceEpoch
+                                            .toString(),
+                                        name: nameController.text,
+                                        phone: phoneController.text,
+                                        address:
+                                            "${addressLine1Controller.text} ${addressLine2Controller.text} ${cityController.text}"
+                                                .trim(),
+                                        tipn: tipnController.text,
+                                        outstandingbalance:
+                                            balanceController.text.isEmpty
+                                            ? "0.00"
+                                            : balanceController.text,
+                                        balanceType:
+                                            selectedBalanceType == "To receive"
+                                            ? "DR"
+                                            : "CR",
+                                        email: emailController.text,
+                                        city: cityController.text,
+                                        zip: zipController.text,
+                                        region: regionController.text,
+                                        birthday: birthdayController.text,
+                                        customerCode:
+                                            customerCodeController.text,
+                                        nir: nirController.text,
+                                        type: selectedCustomerType,
+                                      );
+                                      customers.add(newCustomer);
+                                      setSelectionState(() {});
+                                      Navigator.pop(context);
                                       ScaffoldMessenger.of(
                                         context,
                                       ).showSnackBar(
                                         const SnackBar(
                                           content: Text(
-                                            "Name and Phone are required",
+                                            "Customer saved successfully",
                                           ),
+                                          backgroundColor: Color(0xff7CD23D),
                                         ),
                                       );
-                                      return;
-                                    }
-                                    final newCustomer = Customer(
-                                      partyId: DateTime.now()
-                                          .millisecondsSinceEpoch
-                                          .toString(),
-                                      name: nameController.text,
-                                      phone: phoneController.text,
-                                      address:
-                                          "${addressLine1Controller.text} ${addressLine2Controller.text} ${cityController.text}"
-                                              .trim(),
-                                      tipn: tipnController.text,
-                                      outstandingbalance:
-                                          balanceController.text.isEmpty
-                                          ? "0.00"
-                                          : balanceController.text,
-                                      balanceType:
-                                          selectedBalanceType == "To receive"
-                                          ? "DR"
-                                          : "CR",
-                                      email: emailController.text,
-                                      city: cityController.text,
-                                      zip: zipController.text,
-                                      region: regionController.text,
-                                      birthday: birthdayController.text,
-                                      customerCode: customerCodeController.text,
-                                      nir: nirController.text,
-                                      type: selectedCustomerType,
-                                    );
-                                    customers.add(newCustomer);
-                                    setSelectionState(() {});
-                                    Navigator.pop(context);
-
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          "Customer saved successfully",
-                                        ),
-                                        backgroundColor: Color(0xff7CD23D),
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.white,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 24,
+                                        vertical: 16,
                                       ),
-                                    );
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        Colors.white, // Odoo purple
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 24,
-                                      vertical: 16,
+                                      side: const BorderSide(
+                                        color: Colors.black,
+                                        width: 0.5,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
                                     ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4),
+                                    child: const Text(
+                                      "Save",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: Color(0xff7CD23D),
+                                        fontFamily: 'SanFrancisco',
+                                      ),
                                     ),
-                                  ),
-                                  child: const Text(
-                                    "Save",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: Colors.black,
-                                      fontFamily: 'SanFrancisco',
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Divider(height: 1),
-                      // Identity Section
-                      Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Avatar Placeholder
-                            Container(
-                              width: 110,
-                              height: 110,
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey.shade300),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Icon(
-                                Icons.person_outline,
-                                size: 60,
-                                color: Colors.grey.shade400,
-                              ),
-                            ),
-                            const SizedBox(width: 24),
-                            // Name and Quick Info
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildIconField(
-                                    Icons.person_outlined,
-                                    "Name",
-                                    companyController,
-                                  ),
-                                  _buildIconField(
-                                    Icons.email_outlined,
-                                    "Email",
-                                    emailController,
-                                  ),
-                                  _buildIconField(
-                                    Icons.phone_outlined,
-                                    "Phone",
-                                    phoneController,
                                   ),
                                 ],
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Dual Column Section
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Left Column: Address
-                            Expanded(
-                              child: Column(
-                                spacing: 4,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildRowField(
-                                    "Address",
-                                    "Street...",
-                                    addressLine1Controller,
-                                  ),
-                                  _buildRowField(
-                                    "",
-                                    "Street 2...",
-                                    addressLine2Controller,
-                                    hideLabel: true,
-                                  ),
-                                  Row(
-                                    children: [
-                                      const SizedBox(width: 100),
-                                      Expanded(
-                                        child: _buildMinimalField(
-                                          "City",
-                                          cityController,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: _buildMinimalField(
-                                          "State",
-                                          regionController,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: _buildMinimalField(
-                                          "ZIP",
-                                          zipController,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  _buildRowField(
-                                    "",
-                                    "Country",
-                                    TextEditingController(text: "Nepal"),
-                                    hideLabel: true,
-                                  ),
-                                  _buildRowField(
-                                    "Tax ID",
-                                    "e.g. BE0477472701",
-                                    tipnController,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 48),
-                            // Right Column: Professional fields
-                            Expanded(
-                              child: Column(
-                                spacing: 4,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildRowField(
-                                    "Job Position",
-                                    "e.g. Sales Director",
-                                    jobPositionController,
-                                  ),
-                                  _buildRowField(
-                                    "Website",
-                                    "e.g. https://www.odoo.com",
-                                    websiteController,
-                                  ),
-                                  _buildRowField(
-                                    "Tags",
-                                    "e.g. \"B2B\", \"VIP\"",
-                                    tagsController,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-                      // Tabs Section
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20),
-                        child: TabBar(
-                          tabAlignment: TabAlignment.start,
-                          isScrollable: true,
-                          labelColor: Color(0xff7CD23D),
-                          unselectedLabelColor: Colors.black54,
-                          indicatorColor: Color(0xff7CD23D),
-                          indicatorSize: TabBarIndicatorSize.tab,
-                          labelStyle: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
-                          tabs: [
-                            Tab(text: "Contacts"),
-                            Tab(text: "Sales & Purchase"),
-                            Tab(text: "Invoicing"),
-                            Tab(text: "Notes"),
-                          ],
-                        ),
-                      ),
-                      const Divider(height: 1),
-
-                      // Tab Content (Flexible)
-                      Flexible(
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: TabBarView(
-                            children: [
-                              _buildInvoicingTab(
-                                balanceController,
-                                selectedBalanceType,
-                                (val) => setDialogState(
-                                  () => selectedBalanceType = val,
-                                ),
-                              ),
-                              const Center(child: Text("Sales details here")),
-                              _buildExtraInfoTab(
-                                customerCodeController,
-                                nirController,
-                                birthdayController,
-                                context,
-                                setDialogState,
-                              ),
-                              const Center(child: Text("Notes area")),
                             ],
                           ),
                         ),
-                      ),
-                    ],
+                        const Divider(height: 1),
+                        // Identity Section
+                        Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Avatar Placeholder
+                              Container(
+                                width: 110,
+                                height: 110,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Icon(
+                                  Icons.person_outline,
+                                  size: 60,
+                                  color: Colors.grey.shade400,
+                                ),
+                              ),
+                              const SizedBox(width: 24),
+                              // Name and Quick Info
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildNameField(
+                                      Icons.person_outlined,
+                                      "Name",
+                                      nameController,
+                                    ),
+                                    _buildIconField(
+                                      Icons.email_outlined,
+                                      "Email",
+                                      emailController,
+                                    ),
+                                    _buildIconField(
+                                      Icons.phone_outlined,
+                                      "Phone",
+                                      phoneController,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Dual Column Section
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Left Column: Address
+                              Expanded(
+                                child: Column(
+                                  spacing: 4,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildRowField(
+                                      "Address",
+                                      "Street...",
+                                      addressLine1Controller,
+                                    ),
+                                    _buildRowField(
+                                      "",
+                                      "Street 2...",
+                                      addressLine2Controller,
+                                      hideLabel: true,
+                                    ),
+                                    Row(
+                                      children: [
+                                        const SizedBox(width: 100),
+                                        Expanded(
+                                          child: _buildMinimalField(
+                                            "City",
+                                            cityController,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: _buildMinimalField(
+                                            "State",
+                                            regionController,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: _buildMinimalField(
+                                            "ZIP",
+                                            zipController,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    _buildRowField(
+                                      "",
+                                      "Country",
+                                      TextEditingController(text: "Nepal"),
+                                      hideLabel: true,
+                                    ),
+                                    _buildRowField(
+                                      "Tax ID",
+                                      "e.g. BE0477472701",
+                                      tipnController,
+                                    ),
+                                    SizedBox(height: 16),
+
+                                    Text(
+                                      "Accounts info",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                        color: Colors.black,
+                                        fontFamily: 'SanFrancisco',
+                                      ),
+                                    ),
+                                    _buildRowField(
+                                      "Balance",
+                                      "0.00",
+                                      balanceController,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Row(
+                                      children: [
+                                        const SizedBox(width: 100),
+                                        ChoiceChip(
+                                          backgroundColor: Colors.white,
+                                          label: const Text(
+                                            "To receive",
+                                            style: TextStyle(
+                                              fontFamily: 'SanFrancisco',
+                                            ),
+                                          ),
+                                          selected:
+                                              selectedType == "To receive",
+                                          selectedColor: const Color(
+                                            0xff008784,
+                                          ).withValues(alpha: 0.1),
+                                          onSelected: (s) =>
+                                              onTypeChanged("To receive"),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        ChoiceChip(
+                                          backgroundColor: Colors.white,
+                                          label: const Text(
+                                            "To give",
+                                            style: TextStyle(
+                                              fontFamily: 'SanFrancisco',
+                                            ),
+                                          ),
+                                          selected: selectedType == "To give",
+                                          selectedColor: const Color(
+                                            0xff714B67,
+                                          ).withValues(alpha: 0.1),
+                                          onSelected: (s) =>
+                                              onTypeChanged("To give"),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 48),
+                              // Right Column: Professional fields
+                              Expanded(
+                                child: Column(
+                                  spacing: 4,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // _buildRowField(
+                                    //   "Job Position",
+                                    //   "e.g. Sales Director",
+                                    //   jobPositionController,
+                                    // ),
+                                    // _buildRowField(
+                                    //   "Website",
+                                    //   "e.g. https://www.odoo.com",
+                                    //   websiteController,
+                                    // ),
+                                    // _buildRowField(
+                                    //   "Tags",
+                                    //   "e.g. \"B2B\", \"VIP\"",
+                                    //   tagsController,
+                                    // ),
+                                    _buildRowField(
+                                      "Customer Code",
+                                      "e.g. 01234",
+                                      tagsController,
+                                    ),
+                                    _buildRowField(
+                                      "Type",
+                                      "e.g. \"Customer\", \"Vendor\"",
+                                      tagsController,
+                                    ),
+
+                                    _buildDobField(
+                                      context,
+                                      "Birthday",
+                                      "Select date of birth",
+                                      dobController,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -393,6 +432,45 @@ class _POSLandingPageState extends State<POSLandingPage> {
           },
         );
       },
+    );
+  }
+
+  //name textfield
+  Widget _buildNameField(
+    IconData icon,
+    String hint,
+    TextEditingController controller,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 26, color: Colors.black),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: TextStyle(
+                  color: Colors.black,
+                  fontSize: 26,
+                  fontFamily: 'SanFrancisco',
+                ),
+                isDense: true,
+                border: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.transparent),
+                ),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey.shade200),
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 4),
+              ),
+              style: const TextStyle(fontSize: 26, fontFamily: 'SanFrancisco'),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -431,6 +509,60 @@ class _POSLandingPageState extends State<POSLandingPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDobField(
+    BuildContext context,
+    String label,
+    String hint,
+    TextEditingController controller,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontFamily: 'SanFrancisco',
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: controller,
+          readOnly: true,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(
+              fontSize: 13,
+              fontFamily: 'SanFrancisco',
+              color: Colors.black,
+            ),
+            suffixIcon: const Icon(Icons.calendar_today, size: 18),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey.shade200),
+            ),
+          ),
+          onTap: () async {
+            DateTime? pickedDate = await showDatePicker(
+              context: context,
+              initialDate: DateTime.now().subtract(
+                const Duration(days: 365 * 18),
+              ),
+              firstDate: DateTime(1900),
+              lastDate: DateTime.now(),
+            );
+
+            if (pickedDate != null) {
+              controller.text =
+                  "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
+            }
+          },
+        ),
+      ],
     );
   }
 
@@ -498,123 +630,6 @@ class _POSLandingPageState extends State<POSLandingPage> {
         contentPadding: const EdgeInsets.symmetric(vertical: 6),
       ),
       style: const TextStyle(fontSize: 13),
-    );
-  }
-
-  Widget _buildInvoicingTab(
-    TextEditingController balanceController,
-    String selectedType,
-    Function(String) onTypeChanged,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Accounts info",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-            color: Colors.black,
-            fontFamily: 'SanFrancisco',
-          ),
-        ),
-        const SizedBox(height: 16),
-        _buildRowField("Balance", "0.00", balanceController),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            const SizedBox(width: 100),
-            ChoiceChip(
-              label: const Text(
-                "To receive",
-                style: TextStyle(fontFamily: 'SanFrancisco'),
-              ),
-              selected: selectedType == "To receive",
-              selectedColor: const Color(0xff008784).withValues(alpha: 0.1),
-              onSelected: (s) => onTypeChanged("To receive"),
-            ),
-            const SizedBox(width: 8),
-            ChoiceChip(
-              label: const Text(
-                "To give",
-                style: TextStyle(fontFamily: 'SanFrancisco'),
-              ),
-              selected: selectedType == "To give",
-              selectedColor: const Color(0xff714B67).withValues(alpha: 0.1),
-              onSelected: (s) => onTypeChanged("To give"),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildExtraInfoTab(
-    TextEditingController code,
-    TextEditingController nir,
-    TextEditingController birthday,
-    BuildContext context,
-    StateSetter setDialogState,
-  ) {
-    return Column(
-      children: [
-        _buildRowField("Customer Code", "Ext-ID...", code),
-        _buildRowField("NIR", "National ID...", nir),
-        Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Row(
-            children: [
-              const SizedBox(width: 100),
-              const Text(
-                "Birthday",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: Colors.black,
-                  fontFamily: 'SanFrancisco',
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: InkWell(
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(1900),
-                      lastDate: DateTime.now(),
-                    );
-                    if (picked != null) {
-                      setDialogState(
-                        () => birthday.text =
-                            "${picked.month}/${picked.day}/${picked.year}",
-                      );
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(color: Colors.grey.shade200),
-                      ),
-                    ),
-                    child: Text(
-                      birthday.text.isEmpty ? "Select date..." : birthday.text,
-                      style: TextStyle(
-                        color: birthday.text.isEmpty
-                            ? Colors.grey.shade400
-                            : Colors.black87,
-                        fontSize: 13,
-                        fontFamily: 'SanFrancisco',
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 
@@ -800,13 +815,13 @@ class _POSLandingPageState extends State<POSLandingPage> {
                               height: MediaQuery.of(context).size.height * 0.05,
                               width: MediaQuery.of(context).size.height * 0.05,
                               child: PopupMenuButton<String>(
-                                tooltip: "Filter by Discount",
+                                // tooltip: "Filter by Discount",
                                 icon: Center(
                                   child: Icon(
-                                    Icons.discount_sharp,
+                                    Icons.sort_rounded,
                                     size: 20,
                                     color: filterDiscount != 'All'
-                                        ? Colors.blue
+                                        ? Colors.orange
                                         : Colors.grey.shade600,
                                   ),
                                 ),
@@ -830,14 +845,54 @@ class _POSLandingPageState extends State<POSLandingPage> {
                                   return [
                                     const PopupMenuItem(
                                       value: 'All',
-                                      child: Text('All Discounts'),
-                                    ),
-                                    ...discounts.map(
-                                      (d) => PopupMenuItem(
-                                        value: d,
-                                        child: Text('$d%'),
+                                      child: Text(
+                                        'All',
+                                        style: TextStyle(
+                                          // fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          fontFamily: 'SanFrancisco',
+                                        ),
                                       ),
                                     ),
+                                    const PopupMenuItem(
+                                      value: 'All',
+                                      child: Text(
+                                        'Customers',
+                                        style: TextStyle(
+                                          // fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          fontFamily: 'SanFrancisco',
+                                        ),
+                                      ),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'All',
+                                      child: Text(
+                                        'Suppliers',
+                                        style: TextStyle(
+                                          // fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          fontFamily: 'SanFrancisco',
+                                        ),
+                                      ),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'All',
+                                      child: Text(
+                                        'Discounts Type',
+                                        style: TextStyle(
+                                          // fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          fontFamily: 'SanFrancisco',
+                                        ),
+                                      ),
+                                    ),
+                                    // ...discounts.map(
+                                    //   (d) => PopupMenuItem(
+                                    //     value: d,
+                                    //     child: Text('$d%'),
+                                    //   ),
+                                    // ),
                                   ];
                                 },
                               ),
@@ -852,13 +907,13 @@ class _POSLandingPageState extends State<POSLandingPage> {
                               height: MediaQuery.of(context).size.height * 0.05,
                               width: MediaQuery.of(context).size.height * 0.05,
                               child: PopupMenuButton<String>(
-                                tooltip: "Sort Customers",
+                                // tooltip: "Sorting Customer",
                                 icon: Center(
                                   child: Icon(
-                                    Icons.filter_list,
+                                    Icons.filter_alt_outlined,
                                     size: 26,
                                     color: sortOption != 'default'
-                                        ? Colors.blue
+                                        ? Color(0xff7CD23D)
                                         : Colors.grey.shade600,
                                   ),
                                 ),
@@ -870,15 +925,33 @@ class _POSLandingPageState extends State<POSLandingPage> {
                                 itemBuilder: (context) => [
                                   const PopupMenuItem(
                                     value: 'az',
-                                    child: Text('Name (A-Z)'),
+                                    child: Text(
+                                      'Name (A-Z)',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontFamily: 'SanFrancisco',
+                                      ),
+                                    ),
                                   ),
                                   const PopupMenuItem(
                                     value: 'za',
-                                    child: Text('Name (Z-A)'),
+                                    child: Text(
+                                      'Name (Z-A)',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontFamily: 'SanFrancisco',
+                                      ),
+                                    ),
                                   ),
                                   const PopupMenuItem(
                                     value: 'newest',
-                                    child: Text('New Created'),
+                                    child: Text(
+                                      'New created',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontFamily: 'SanFrancisco',
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -1144,29 +1217,27 @@ class _POSLandingPageState extends State<POSLandingPage> {
                                                     fontFamily: 'SanFrancisco',
                                                   ),
                                                 ),
-                                                SizedBox(width: 4),
-                                                VerticalDivider(
-                                                  width: 1,
-                                                  thickness: 1,
-                                                  color: Colors.grey.shade600,
-                                                ),
-                                                SizedBox(width: 4),
-                                                Text(
-                                                  customer.tipn,
-                                                  style: TextStyle(
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.w500,
-                                                    color: Colors.grey.shade700,
-                                                    fontFamily: 'SanFrancisco',
-                                                  ),
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
                                               ],
                                             ),
                                           ),
                                           const SizedBox(height: 2),
+                                          VerticalDivider(
+                                            width: 1,
+                                            thickness: 1,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            "TIPN: ${customer.tipn}",
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.grey.shade700,
+                                              fontFamily: 'SanFrancisco',
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                           Row(
                                             children: [
                                               Icon(
@@ -1263,8 +1334,6 @@ class _POSLandingPageState extends State<POSLandingPage> {
       );
       if (existingIndex != -1) {
         items[existingIndex].quantity += quantity;
-        // The original logic to move to top was removed in the provided diff,
-        // so I'm keeping the new simplified logic.
       } else {
         items.insert(
           0,
@@ -1306,76 +1375,73 @@ class _POSLandingPageState extends State<POSLandingPage> {
     final total = subtotal + tax;
     return Scaffold(
       drawer: const CustomDrawer(),
+      drawerEnableOpenDragGesture: !isPaymentSuccess,
       backgroundColor: Colors.white,
       body: Row(
         children: [
           // Left Sidebar (Order Details) - Always visible
           SizedBox(
             width: 380,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(2, 0),
-                  ),
-                ],
-              ),
-              child: OrderSidebar(
-                items: items,
-                isPaymentMode: isPaymentMode,
-                customerName: customerName,
-                customerPhone: customerPhone,
-                customerAddress: customerAddress,
-                customerBalance: customerBalance,
-                tipn: tipn,
-                onRemove: (index) {
-                  setState(() {
-                    items.removeAt(index);
-                  });
-                },
-                onQuantityChange: (int index, double newQty) {
-                  setState(() {
-                    if (newQty <= 0) {
-                      items.removeAt(index);
-                    } else {
-                      items[index].quantity = newQty;
-                      // Move the updated item to the top
-                      final item = items.removeAt(index);
-                      items.insert(0, item);
-                    }
-                  });
-                },
-                onCustomerSelect: _showCustomerSelectionDialog,
-                onCustomerClear: () {
-                  setState(() {
-                    selectedCustomer = null;
-                    isCustomerSelected = false;
-                    customerName = "";
-                    customerPhone = "";
-                    customerAddress = "";
-                    customerBalance = "";
-                  });
-                },
-                draftOrders: draftOrders,
-                onRestoreDraft: (DraftOrder draft) {
-                  setState(() {
-                    items.clear();
-                    items.addAll(draft.items);
-                    customerName = draft.customerName;
-                    customerPhone = draft.customerPhone;
-                    customerAddress = draft.customerAddress;
-                    isCustomerSelected = customerName.isNotEmpty;
-                  });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Draft restored successfully"),
-                      backgroundColor: Color(0xff7CD23D),
+            child: AbsorbPointer(
+              absorbing: isPaymentSuccess,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(2, 0),
                     ),
-                  );
-                },
+                  ],
+                ),
+                child: OrderSidebar(
+                  items: items,
+                  isPaymentMode: isPaymentMode,
+                  customerName: customerName,
+                  customerPhone: customerPhone,
+                  customerAddress: customerAddress,
+                  customerBalance: customerBalance,
+                  tipn: tipn,
+                  onRemove: (index) {
+                    setState(() {
+                      items.removeAt(index);
+                    });
+                  },
+                  onQuantityChange: (int index, double newQty) {
+                    setState(() {
+                      if (newQty <= 0) {
+                        items.removeAt(index);
+                      } else {
+                        items[index].quantity = newQty;
+                        final item = items.removeAt(index);
+                        items.insert(0, item);
+                      }
+                    });
+                  },
+                  onCustomerSelect: _showCustomerSelectionDialog,
+                  onCustomerClear: () {
+                    setState(() {
+                      selectedCustomer = null;
+                      isCustomerSelected = false;
+                      customerName = "";
+                      customerPhone = "";
+                      customerAddress = "";
+                      customerBalance = "";
+                    });
+                  },
+                  draftOrders: draftOrders,
+                  onRestoreDraft: (DraftOrder draft) {
+                    setState(() {
+                      items.clear();
+                      items.addAll(draft.items);
+                      customerName = draft.customerName;
+                      customerPhone = draft.customerPhone;
+                      customerAddress = draft.customerAddress;
+                      isCustomerSelected = customerName.isNotEmpty;
+                    });
+                  },
+                ),
               ),
             ),
           ),
@@ -1395,6 +1461,11 @@ class _POSLandingPageState extends State<POSLandingPage> {
                     customerAddress: customerAddress,
                     customerPan: customerPan,
                     onSelectCustomer: _showCustomerSelectionDialog,
+                    onPaymentSuccess: (val) {
+                      setState(() {
+                        isPaymentSuccess = val;
+                      });
+                    },
                     onPaymentModeChanged: (mode) {
                       setState(() {
                         selectedPayment = mode;
@@ -1411,6 +1482,7 @@ class _POSLandingPageState extends State<POSLandingPage> {
                     onBack: () {
                       setState(() {
                         isPaymentMode = false;
+                        isPaymentSuccess = false;
                       });
                     },
                     onConfirm: () {
@@ -1432,6 +1504,7 @@ class _POSLandingPageState extends State<POSLandingPage> {
                                   items.clear();
                                   isPaymentMode = false;
                                   enteredAmount = "";
+                                  isPaymentSuccess = false;
                                 });
                                 Navigator.pop(context);
                               },

@@ -1,8 +1,11 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:itemedit/ui/trade/model/product_class.dart';
 import 'dart:async';
 import '../trade_landing_page.dart';
 import 'custom_num.dart';
+import 'billsample.dart';
 
 // ignore: must_be_immutable
 class PaymentBody extends StatefulWidget {
@@ -41,7 +44,10 @@ class PaymentBody extends StatefulWidget {
     this.customerPhone = "",
     this.customerAddress = "",
     this.customerPan = "",
+    this.onPaymentSuccess,
   });
+
+  final ValueChanged<bool>? onPaymentSuccess;
 
   @override
   State<PaymentBody> createState() => _PaymentBodyState();
@@ -145,32 +151,143 @@ class _PaymentBodyState extends State<PaymentBody> {
 
     _delayTimeController.clear();
   }
+  //EDIT party details
+
+  void _showEditCustomerDialog() {
+    final nameController = TextEditingController(text: widget.customerName);
+    final phoneController = TextEditingController(text: widget.customerPhone);
+    final addressController = TextEditingController(
+      text: widget.customerAddress,
+    );
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: SizedBox(
+            width: 500,
+            child: AlertDialog(
+              contentPadding: const EdgeInsets.all(3),
+              backgroundColor: Colors.white,
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.black),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                      ),
+                      Text(
+                        'Edit Details',
+                        style: TextStyle(
+                          fontFamily: 'SanFrancisco',
+                          fontSize: 15,
+                        ),
+                      ),
+                    ],
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        widget.customerName = nameController.text;
+                        widget.customerPhone = phoneController.text;
+                        widget.customerAddress = addressController.text;
+                        // Update delivery controllers as well
+                        _deliveryPhoneController.text = widget.customerPhone;
+                        _deliveryAddressController.text =
+                            widget.customerAddress;
+                      });
+                      Navigator.pop(context);
+                    },
+
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Color(0xff7CD23D)),
+                    ),
+
+                    child: const Text(
+                      'Save',
+                      style: TextStyle(
+                        fontFamily: 'SanFrancisco',
+                        color: Color(0xff7CD23D),
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Name',
+                        labelStyle: TextStyle(fontFamily: 'SanFrancisco'),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: phoneController,
+                      decoration: const InputDecoration(
+                        labelText: 'Phone',
+                        labelStyle: TextStyle(fontFamily: 'SanFrancisco'),
+                      ),
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: addressController,
+                      decoration: const InputDecoration(
+                        labelText: 'Address',
+                        labelStyle: TextStyle(fontFamily: 'SanFrancisco'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   void _handleCheckout() {
     setState(() {
       _isPaymentSuccess = true;
     });
+    if (widget.onPaymentSuccess != null) {
+      widget.onPaymentSuccess!(true);
+    }
   }
 
   // void _handleNewSale() {
   //   widget.onConfirm();
   // }
-
-  // void _onBackspace() {
-  //   if (widget.enteredAmount.isNotEmpty) {
-  //     widget.onAmountChanged(
-  //       widget.enteredAmount.substring(0, widget.enteredAmount.length - 1),
-  //     );
-  //   }
-  // }
+  void _onBackspace() {
+    if (widget.enteredAmount.isNotEmpty) {
+      widget.onAmountChanged(
+        widget.enteredAmount.substring(0, widget.enteredAmount.length - 1),
+      );
+    }
+  }
 
   Widget _buildCreditSaleFrame() {
     final bool customerSelected =
         widget.customerName.isNotEmpty && widget.customerPhone.isNotEmpty;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final maxWidth = constraints.maxWidth;
         return Container(
+          width: 620,
           decoration: const BoxDecoration(color: Colors.white),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
@@ -212,7 +329,7 @@ class _PaymentBodyState extends State<PaymentBody> {
                           context,
                         ).copyWith(dividerColor: Colors.transparent),
                         child: Container(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: customerSelected
                                 ? const Color(0xFFF8FAFC)
@@ -260,8 +377,22 @@ class _PaymentBodyState extends State<PaymentBody> {
                                             ),
                                           ),
                                         ),
+
                                         if (widget.customerName.isEmpty)
                                           Icon(Icons.arrow_right_sharp),
+                                        if (widget.customerName.isNotEmpty)
+                                          IconButton(
+                                            visualDensity:
+                                                VisualDensity.compact,
+                                            onPressed: () {
+                                              _showEditCustomerDialog();
+                                            },
+                                            icon: const Icon(
+                                              Icons.edit,
+                                              size: 18,
+                                              color: Colors.blue,
+                                            ),
+                                          ),
                                       ],
                                     ),
                                     const SizedBox(height: 2),
@@ -300,9 +431,11 @@ class _PaymentBodyState extends State<PaymentBody> {
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 12),
-                    _buildReferenceFieldWithLink(maxWidth),
+                    _buildReferenceFieldWithLink(),
                     const SizedBox(height: 12),
                     _buildNoteAndPurchaseType(),
                   ],
@@ -319,75 +452,27 @@ class _PaymentBodyState extends State<PaymentBody> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxWidth = constraints.maxWidth;
-        final isSmallScreen = maxWidth < 500;
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Note Field
-            ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: maxWidth),
-              child: TextField(
+        final isSmallScreen = maxWidth < 620;
+        return SizedBox(
+          width: 620,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Note Field
+              TextField(
                 controller: _noteController,
                 focusNode: _noteFocusNode,
                 decoration: const InputDecoration(labelText: "Note (Optional)"),
               ),
-            ),
-
-            const SizedBox(height: 10),
-            // Purchase Type
-            ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: maxWidth),
-              child: isSmallScreen
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Purchase Type",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF64748B),
-                            fontFamily: 'SanFrancisco',
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _checkoutType = "Serve Now";
-                                });
-                              },
-                              child: _checkoutTypeRadio("Serve Now"),
-                            ),
-                            InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _checkoutType = "Pickup Later";
-                                });
-                              },
-                              child: _checkoutTypeRadio("Pickup Later"),
-                            ),
-                            InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _checkoutType = "Delivery";
-                                });
-                              },
-                              child: _checkoutTypeRadio("Delivery"),
-                            ),
-                          ],
-                        ),
-                      ],
-                    )
-                  : Row(
-                      children: [
-                        const Expanded(
-                          flex: 1,
-                          child: Text(
+              const SizedBox(height: 10),
+              // Purchase Type
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxWidth),
+                child: isSmallScreen
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
                             "Purchase Type",
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
@@ -395,138 +480,185 @@ class _PaymentBodyState extends State<PaymentBody> {
                               fontFamily: 'SanFrancisco',
                             ),
                           ),
-                        ),
-                        Expanded(
-                          child: InkWell(
-                            onTap: () {
-                              setState(() {
-                                _checkoutType = "Serve Now";
-                              });
-                            },
-                            child: _checkoutTypeRadio("Serve Now"),
-                          ),
-                        ),
-                        Expanded(
-                          child: InkWell(
-                            onTap: () {
-                              setState(() {
-                                _checkoutType = "Pickup Later";
-                              });
-                            },
-                            child: _checkoutTypeRadio("Pickup Later"),
-                          ),
-                        ),
-                        Expanded(
-                          child: InkWell(
-                            onTap: () {
-                              setState(() {
-                                _checkoutType = "Delivery";
-                              });
-                            },
-                            child: _checkoutTypeRadio("Delivery"),
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
-            SizedBox(height: 10),
-            // Time Picker for Pickup Later
-            if (_checkoutType == "Pickup Later") ...[
-              const SizedBox(height: 10),
-              GestureDetector(
-                onTap: () async {
-                  final date = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime.now().add(const Duration(days: 365)),
-                  );
-                  if (date != null) {
-                    // ignore: use_build_context_synchronously
-                    final time = await showTimePicker(
-                      context: context,
-                      initialTime: TimeOfDay.now(),
-                    );
-                    if (time != null) {
-                      final dateTime = DateTime(
-                        date.year,
-                        date.month,
-                        date.day,
-                        time.hour,
-                        time.minute,
-                      );
-                      setState(() {
-                        _pickupDateTime = dateTime;
-                        _delayTimeController.text =
-                            "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} ${time.format(context)}";
-                      });
-                      _startCountdownToTime(dateTime);
-                    }
-                  }
-                },
-                child: AbsorbPointer(
-                  child: TextField(
-                    controller: _delayTimeController,
-                    decoration: InputDecoration(
-                      labelText: 'Select Pickup Date & Time',
-                      prefixIcon: const Icon(Icons.calendar_today),
-                      suffixIcon:
-                          _remainingSeconds > 0 && _pickupDateTime != null
-                          ? Padding(
-                              padding: const EdgeInsets.only(right: 12),
-                              child: Text(
-                                '${(_remainingSeconds ~/ 3600).toString().padLeft(2, '0')}:${((_remainingSeconds % 3600) ~/ 60).toString().padLeft(2, '0')}:${(_remainingSeconds % 60).toString().padLeft(2, '0')}',
-                                style: const TextStyle(
-                                  color: Colors.red,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    _checkoutType = "Serve Now";
+                                  });
+                                },
+                                child: _checkoutTypeRadio("Serve Now"),
                               ),
-                            )
-                          : null,
+                              InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    _checkoutType = "Pickup Later";
+                                  });
+                                },
+                                child: _checkoutTypeRadio("Pickup Later"),
+                              ),
+                              InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    _checkoutType = "Delivery";
+                                  });
+                                },
+                                child: _checkoutTypeRadio("Delivery"),
+                              ),
+                            ],
+                          ),
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          const Expanded(
+                            flex: 1,
+                            child: Text(
+                              "Purchase Type",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF64748B),
+                                fontFamily: 'SanFrancisco',
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _checkoutType = "Serve Now";
+                                });
+                              },
+                              child: _checkoutTypeRadio("Serve Now"),
+                            ),
+                          ),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _checkoutType = "Pickup Later";
+                                });
+                              },
+                              child: _checkoutTypeRadio("Pickup Later"),
+                            ),
+                          ),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _checkoutType = "Delivery";
+                                });
+                              },
+                              child: _checkoutTypeRadio("Delivery"),
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+              SizedBox(height: 10),
+              // Time Picker for Pickup Later
+              if (_checkoutType == "Pickup Later") ...[
+                const SizedBox(height: 10),
+                GestureDetector(
+                  onTap: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (date != null) {
+                      // ignore: use_build_context_synchronously
+                      final time = await showTimePicker(
+                        // ignore: use_build_context_synchronously
+                        context: context,
+                        initialTime: TimeOfDay.now(),
+                      );
+                      if (time != null) {
+                        final dateTime = DateTime(
+                          date.year,
+                          date.month,
+                          date.day,
+                          time.hour,
+                          time.minute,
+                        );
+                        setState(() {
+                          _pickupDateTime = dateTime;
+                          _delayTimeController.text =
+                              "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} ${time.format(context)}";
+                        });
+                        _startCountdownToTime(dateTime);
+                      }
+                    }
+                  },
+                  child: AbsorbPointer(
+                    child: TextField(
+                      controller: _delayTimeController,
+                      decoration: InputDecoration(
+                        labelText: 'Select Pickup Date & Time',
+                        prefixIcon: const Icon(Icons.calendar_today),
+                        suffixIcon:
+                            _remainingSeconds > 0 && _pickupDateTime != null
+                            ? Padding(
+                                padding: const EdgeInsets.only(right: 12),
+                                child: Text(
+                                  '${(_remainingSeconds ~/ 3600).toString().padLeft(2, '0')}:${((_remainingSeconds % 3600) ~/ 60).toString().padLeft(2, '0')}:${(_remainingSeconds % 60).toString().padLeft(2, '0')}',
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              )
+                            : null,
+                      ),
+                      enabled: false,
                     ),
-                    enabled: false,
                   ),
                 ),
-              ),
+              ],
+              // Delivery Address and Phone Fields
+              if (_checkoutType == "Delivery") ...[
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: maxWidth),
+                  child: TextField(
+                    controller: _deliveryPhoneController,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      labelText: 'Delivery Phone',
+                      labelStyle: TextStyle(
+                        fontSize: 12,
+                        fontFamily: 'SanFrancisco',
+                      ),
+                      prefixIcon: Icon(Icons.phone),
+                      hintText: '',
+                      isDense: true,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: maxWidth),
+                  child: TextField(
+                    controller: _deliveryAddressController,
+                    decoration: const InputDecoration(
+                      labelText: 'Delivery Address',
+                      prefixIcon: Icon(Icons.location_on),
+                      labelStyle: TextStyle(
+                        fontSize: 12,
+                        fontFamily: 'SanFrancisco',
+                      ),
+                      hintText: '',
+                      isDense: true,
+                    ),
+                  ),
+                ),
+              ],
             ],
-            // Delivery Address and Phone Fields
-            if (_checkoutType == "Delivery") ...[
-              ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxWidth),
-                child: TextField(
-                  controller: _deliveryPhoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Delivery Phone',
-                    labelStyle: TextStyle(
-                      fontSize: 12,
-                      fontFamily: 'SanFrancisco',
-                    ),
-                    prefixIcon: Icon(Icons.phone),
-                    hintText: '',
-                    isDense: true,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxWidth),
-                child: TextField(
-                  controller: _deliveryAddressController,
-                  decoration: const InputDecoration(
-                    labelText: 'Delivery Address',
-                    prefixIcon: Icon(Icons.location_on),
-                    labelStyle: TextStyle(
-                      fontSize: 1,
-                      fontFamily: 'SanFrancisco',
-                    ),
-                    hintText: '',
-                    isDense: true,
-                  ),
-                ),
-              ),
-            ],
-          ],
+          ),
         );
       },
     );
@@ -641,7 +773,23 @@ class _PaymentBodyState extends State<PaymentBody> {
                         ),
                         if (!isSmallScreen)
                           TextButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => BillSample(
+                                    items: widget.items,
+                                    subtotal: widget.subtotal,
+                                    tax: widget.tax,
+                                    total: widget.total,
+                                    invoiceNumber: widget.invoiceNumber,
+                                    customerName: widget.customerName,
+                                    customerPhone: widget.customerPhone,
+                                    customerAddress: widget.customerAddress,
+                                  ),
+                                ),
+                              );
+                            },
                             child: Row(
                               children: [
                                 Icon(Icons.print, color: Colors.grey.shade600),
@@ -696,7 +844,13 @@ class _PaymentBodyState extends State<PaymentBody> {
                                     ),
                                     const SizedBox(
                                       width: double.infinity,
-                                      child: Divider(),
+                                      child: Padding(
+                                        padding: EdgeInsets.only(
+                                          left: 12.0,
+                                          right: 8.0,
+                                        ),
+                                        child: Divider(),
+                                      ),
                                     ),
                                     if (widget.selectedPayment == "Cash")
                                       Expanded(child: _buildCashSection()),
@@ -739,6 +893,8 @@ class _PaymentBodyState extends State<PaymentBody> {
                                     const SizedBox(width: 16),
                                     Expanded(
                                       child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
@@ -746,8 +902,14 @@ class _PaymentBodyState extends State<PaymentBody> {
                                             constraints.maxWidth - 191,
                                           ),
                                           const SizedBox(
-                                            width: double.infinity,
-                                            child: Divider(),
+                                            width: 620,
+                                            child: Padding(
+                                              padding: EdgeInsets.only(
+                                                left: 12.0,
+                                                right: 8.0,
+                                              ),
+                                              child: Divider(),
+                                            ),
                                           ),
                                           if (widget.selectedPayment == "Cash")
                                             Expanded(
@@ -791,7 +953,22 @@ class _PaymentBodyState extends State<PaymentBody> {
               ),
             ),
             // Bottom Bar
-            _buildBottomBar(isSmallScreen, constraints.maxWidth),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: SizedBox(
+                width: 830,
+                child: Divider(thickness: 1, color: Colors.grey),
+              ),
+            ),
+            Align(
+              alignment: Alignment.center,
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  right: 120,
+                ), // Adjust this for a custom gap
+                child: SizedBox(width: 660, child: _buildBottomBar()),
+              ),
+            ),
           ],
         );
       },
@@ -819,16 +996,9 @@ class _PaymentBodyState extends State<PaymentBody> {
             },
           ),
           const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: [
-                _buildReferenceFieldWithLink(double.infinity),
-                const SizedBox(height: 12),
-                _buildNoteAndPurchaseType(),
-              ],
-            ),
-          ),
+          _buildReferenceFieldWithLink(),
+          const SizedBox(height: 12),
+          _buildNoteAndPurchaseType(),
         ],
       ),
     );
@@ -840,7 +1010,7 @@ class _PaymentBodyState extends State<PaymentBody> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            _buildReferenceFieldWithLink(double.infinity),
+            _buildReferenceFieldWithLink(),
             const SizedBox(height: 12),
             _buildNoteAndPurchaseType(),
           ],
@@ -849,144 +1019,59 @@ class _PaymentBodyState extends State<PaymentBody> {
     );
   }
 
-  Widget _buildBottomBar(bool isSmallScreen, double maxWidth) {
+  Widget _buildBottomBar() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey.shade200)),
-      ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
-          child: isSmallScreen
-              ? Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            _getPaymentStatusLabel(),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'SanFrancisco',
-                            ),
-                          ),
-                        ),
-                        Text(
-                          _calculateChange(),
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'SanFrancisco',
-                            color: (() {
-                              final value =
-                                  double.tryParse(widget.enteredAmount) ?? 0;
-                              final change = value - widget.total;
-                              return change < 0 ? Colors.red : Colors.black;
-                            })(),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _handleCheckout,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          side: const BorderSide(color: Colors.black),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 32,
-                            vertical: 16,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Text(
-                          "Checkout",
-                          style: TextStyle(
-                            fontFamily: 'SanFrancisco',
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const SizedBox(width: 191),
-                    Expanded(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                _getPaymentStatusLabel(),
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'SanFrancisco',
-                                ),
-                              ),
-                              Text(
-                                _calculateChange(),
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'SanFrancisco',
-                                  color: (() {
-                                    final value =
-                                        double.tryParse(widget.enteredAmount) ??
-                                        0;
-                                    final change = value - widget.total;
-                                    return change < 0
-                                        ? Colors.red
-                                        : Colors.black;
-                                  })(),
-                                ),
-                              ),
-                            ],
-                          ),
-                          ElevatedButton(
-                            onPressed: _handleCheckout,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.black,
-                              side: const BorderSide(color: Colors.black),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 32,
-                                vertical: 16,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: const Text(
-                              "Checkout",
-                              style: TextStyle(
-                                fontFamily: 'SanFrancisco',
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Text(
+                _getPaymentStatusLabel(),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'SanFrancisco',
                 ),
-        ),
+              ),
+              Text(
+                _calculateChange(),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'SanFrancisco',
+                  color: (() {
+                    final value = double.tryParse(widget.enteredAmount) ?? 0;
+                    final change = value - widget.total;
+                    return change < 0 ? Colors.red : Colors.black;
+                  })(),
+                ),
+              ),
+            ],
+          ),
+          ElevatedButton(
+            onPressed: _handleCheckout,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              side: const BorderSide(color: Colors.black),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              "Checkout",
+              style: TextStyle(
+                fontFamily: 'SanFrancisco',
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -996,12 +1081,12 @@ class _PaymentBodyState extends State<PaymentBody> {
       builder: (context, constraints) {
         final maxWidth = constraints.maxWidth;
         final containerWidth = maxWidth < 600 ? maxWidth * 0.9 : 500.0;
+        constraints = constraints.copyWith(maxWidth: 0, maxHeight: 0);
         return Center(
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Container(
               width: containerWidth,
-              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
@@ -1020,7 +1105,7 @@ class _PaymentBodyState extends State<PaymentBody> {
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E293B),
+                        color: Colors.black,
                         fontFamily: 'SanFrancisco',
                       ),
                     ),
@@ -1030,18 +1115,18 @@ class _PaymentBodyState extends State<PaymentBody> {
                       "Invoice no: 000000999888999",
                       widget.invoiceNumber,
                     ),
-                    const SizedBox(height: 8),
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        "Customer info",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF64748B),
-                          fontFamily: 'SanFrancisco',
+                    if (widget.customerName.isNotEmpty)
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "Customer info",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                            fontFamily: 'SanFrancisco',
+                          ),
                         ),
                       ),
-                    ),
                     if (widget.customerName.isNotEmpty)
                       Align(
                         alignment: Alignment.centerLeft,
@@ -1050,11 +1135,11 @@ class _PaymentBodyState extends State<PaymentBody> {
                           style: const TextStyle(
                             fontFamily: 'SanFrancisco',
                             fontSize: 13,
-                            color: Color(0xFF1E293B),
+                            color: Colors.black,
                           ),
                         ),
                       ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
                     // Payment Summary
                     const Align(
                       alignment: Alignment.centerLeft,
@@ -1062,7 +1147,7 @@ class _PaymentBodyState extends State<PaymentBody> {
                         "Payment summary",
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF64748B),
+                          color: Colors.black,
                           fontFamily: 'SanFrancisco',
                         ),
                       ),
@@ -1081,7 +1166,7 @@ class _PaymentBodyState extends State<PaymentBody> {
                                 const Text(
                                   "Total paid",
                                   style: TextStyle(
-                                    color: Color(0xFF64748B),
+                                    color: Colors.black,
                                     fontFamily: 'SanFrancisco',
                                   ),
                                 ),
@@ -1091,6 +1176,7 @@ class _PaymentBodyState extends State<PaymentBody> {
                                     fontSize: 26,
                                     fontWeight: FontWeight.bold,
                                     fontFamily: 'SanFrancisco',
+                                    color: Colors.black,
                                   ),
                                 ),
                               ],
@@ -1104,14 +1190,15 @@ class _PaymentBodyState extends State<PaymentBody> {
                           ),
                           Expanded(
                             child: Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 const Text(
                                   "Change",
                                   style: TextStyle(
                                     fontFamily: 'SanFrancisco',
-                                    color: Color(0xFF64748B),
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                                 Text(
@@ -1120,6 +1207,7 @@ class _PaymentBodyState extends State<PaymentBody> {
                                     fontSize: 26,
                                     fontWeight: FontWeight.bold,
                                     fontFamily: 'SanFrancisco',
+                                    color: Colors.black,
                                   ),
                                   maxLines: 5,
                                 ),
@@ -1138,10 +1226,17 @@ class _PaymentBodyState extends State<PaymentBody> {
                             controller: _emailController,
                             decoration: const InputDecoration(
                               hintText: "",
-                              hintStyle: TextStyle(fontFamily: 'SanFrancisco'),
+                              hintStyle: TextStyle(
+                                fontFamily: 'SanFrancisco',
+                                fontSize: 13,
+                                color: Colors.black,
+                              ),
                               label: Text(
                                 "Enter email",
-                                style: TextStyle(fontFamily: 'SanFrancisco'),
+                                style: TextStyle(
+                                  fontFamily: 'SanFrancisco',
+                                  color: Colors.black,
+                                ),
                               ),
                               prefixIcon: Icon(Icons.email_outlined, size: 18),
                               isDense: true,
@@ -1173,10 +1268,17 @@ class _PaymentBodyState extends State<PaymentBody> {
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () {},
-                            icon: const Icon(Icons.share, size: 16),
+                            icon: const Icon(
+                              Icons.share,
+                              size: 16,
+                              color: Colors.black,
+                            ),
                             label: const Text(
                               "Share",
-                              style: TextStyle(fontFamily: 'SanFrancisco'),
+                              style: TextStyle(
+                                fontFamily: 'SanFrancisco',
+                                color: Colors.black,
+                              ),
                             ),
                           ),
                         ),
@@ -1184,10 +1286,17 @@ class _PaymentBodyState extends State<PaymentBody> {
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () {},
-                            icon: const Icon(Icons.receipt, size: 16),
+                            icon: const Icon(
+                              Icons.receipt,
+                              size: 16,
+                              color: Colors.black,
+                            ),
                             label: const Text(
                               "Recipt",
-                              style: TextStyle(fontFamily: 'SanFrancisco'),
+                              style: TextStyle(
+                                fontFamily: 'SanFrancisco',
+                                color: Colors.black,
+                              ),
                             ),
                           ),
                         ),
@@ -1195,10 +1304,17 @@ class _PaymentBodyState extends State<PaymentBody> {
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () {},
-                            icon: const Icon(Icons.print, size: 16),
+                            icon: const Icon(
+                              Icons.print,
+                              size: 16,
+                              color: Colors.black,
+                            ),
                             label: const Text(
                               "Print Bill",
-                              style: TextStyle(fontFamily: 'SanFrancisco'),
+                              style: TextStyle(
+                                fontFamily: 'SanFrancisco',
+                                color: Colors.black,
+                              ),
                             ),
                           ),
                         ),
@@ -1233,6 +1349,7 @@ class _PaymentBodyState extends State<PaymentBody> {
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             fontFamily: 'SanFrancisco',
+                            color: Colors.black,
                           ),
                         ),
                       ),
@@ -1252,13 +1369,21 @@ class _PaymentBodyState extends State<PaymentBody> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Flexible(
-          child: Text(label, style: const TextStyle(color: Color(0xFF64748B))),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 17,
+              fontFamily: 'SanFrancisco',
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
         Text(
           value,
           style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF1E293B),
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
             fontFamily: 'SanFrancisco',
             fontSize: 17,
           ),
@@ -1284,7 +1409,7 @@ class _PaymentBodyState extends State<PaymentBody> {
           label,
           style: const TextStyle(
             fontFamily: 'SanFrancisco',
-            color: Color(0xFF64748B),
+            color: Colors.black,
           ),
         ),
         const SizedBox(width: 8),
@@ -1334,79 +1459,90 @@ class _PaymentBodyState extends State<PaymentBody> {
 
   Widget _buildCommonAmountHeader(double maxWidth) {
     bool hasSelection = widget.selectedPayment.isNotEmpty;
+    bool hascashmode = widget.selectedPayment == 'Cash';
 
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Flexible(
-              child: Text(
-                "Amount Received Rs",
-                style: TextStyle(
-                  fontSize: maxWidth < 400 ? 14 : 16,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: 'SanFrancisco',
+    return SizedBox(
+      width: 620,
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                child: Text(
+                  "    Amount Received Rs",
+                  style: TextStyle(
+                    fontSize: maxWidth < 400 ? 14 : 16,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'SanFrancisco',
+                  ),
                 ),
               ),
-            ),
-            if (hasSelection)
-              Row(
-                spacing: 8,
-                children: [
-                  SizedBox(
-                    width: maxWidth < 400 ? 120 : 200,
-                    child: TextField(
-                      controller: _amount,
-                      focusNode: _amountFocusNode2,
-                      keyboardType: TextInputType.number,
-                      onTap: () {
-                        setState(() {
-                          _shouldClearAmountOnInput = true;
-                        });
-                      },
-                      onChanged: (value) {
-                        if (_shouldClearAmountOnInput) {
+              if (hasSelection)
+                Row(
+                  spacing: 8,
+                  children: [
+                    SizedBox(
+                      width: maxWidth < 1000 ? 150 : 200,
+                      child: TextField(
+                        controller: _amount,
+                        focusNode: _amountFocusNode2,
+                        keyboardType: TextInputType.number,
+                        onTap: () {
                           setState(() {
-                            _amount.text = value.isNotEmpty
-                                ? value[value.length - 1]
-                                : '';
-                            _amount.selection = TextSelection.collapsed(
-                              offset: _amount.text.length,
-                            );
-                            _shouldClearAmountOnInput = false;
+                            _shouldClearAmountOnInput = true;
                           });
-                        }
-                      },
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        disabledBorder: InputBorder.none,
-                      ),
-                      textAlign: TextAlign.right,
-                      style: TextStyle(
-                        fontSize: maxWidth < 400 ? 20 : 24,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'SanFrancisco',
+                        },
+                        onChanged: (value) {
+                          if (_shouldClearAmountOnInput) {
+                            setState(() {
+                              _amount.text = value.isNotEmpty
+                                  ? value[value.length - 1]
+                                  : '';
+                              _amount.selection = TextSelection.collapsed(
+                                offset: _amount.text.length,
+                              );
+                              _shouldClearAmountOnInput = false;
+                            });
+                          }
+                        },
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          disabledBorder: InputBorder.none,
+                        ),
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          fontSize: maxWidth < 400 ? 20 : 24,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'SanFrancisco',
+                        ),
                       ),
                     ),
+                    if (hascashmode)
+                      IconButton(
+                        onPressed: () {
+                          _onBackspace();
+                        },
+                        icon: Icon(Icons.backspace_rounded),
+                      ),
+                  ],
+                )
+              else
+                Text(
+                  "Rs 0.00",
+                  style: TextStyle(
+                    fontSize: maxWidth < 400 ? 20 : 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                    fontFamily: 'SanFrancisco',
                   ),
-                ],
-              )
-            else
-              Text(
-                "Rs 0.00",
-                style: TextStyle(
-                  fontSize: maxWidth < 400 ? 20 : 24,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF1E293B),
-                  fontFamily: 'SanFrancisco',
                 ),
-              ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -1460,10 +1596,11 @@ class _PaymentBodyState extends State<PaymentBody> {
     });
   }
 
-  Widget _buildReferenceFieldWithLink(double maxWidth) {
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: maxWidth),
+  Widget _buildReferenceFieldWithLink() {
+    return SizedBox(
+      width: 620,
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Expanded(
             child: TextField(

@@ -118,7 +118,7 @@ class OrderItemTile extends StatelessWidget {
                     ),
                     if (item.tax != null && item.tax!.isNotEmpty)
                       Text(
-                        "Tax: ${item.tax}",
+                        "(${item.tax} applied)",
                         style: const TextStyle(
                           fontSize: 11,
                           color: Colors.grey,

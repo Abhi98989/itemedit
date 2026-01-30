@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:itemedit/ui/trade/widget/custom_num.dart';
@@ -48,7 +49,6 @@ class _OrderSidebarState extends State<OrderSidebar> {
   final double _deliveryCharges = 0.0;
   double _packageCharges = 0.0;
   String _couponCode = "";
-
   // Store dynamic charges
   final List<Map<String, dynamic>> _chargeTypes = [];
   double _orderTip = 0;
@@ -114,6 +114,8 @@ class _OrderSidebarState extends State<OrderSidebar> {
     bool applyBeforeTax = true;
     String? offerType;
     final noteController = TextEditingController(text: tempNote);
+    final percentageController = TextEditingController();
+    final amountrsController = TextEditingController();
     showDialog(
       barrierDismissible: false,
       context: context,
@@ -355,54 +357,42 @@ class _OrderSidebarState extends State<OrderSidebar> {
                         /// DISCOUNT OPTIONS
                         if (offerType == "discount") ...[
                           const SizedBox(height: 16),
-                          Row(
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
                             children: [
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  const Text(
-                                    "Discount Apply",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 16,
-                                      fontFamily: 'SanFrancisco',
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: ChoiceChip(
-                                      label: const Text(
-                                        "Before Tax",
-                                        style: TextStyle(
-                                          fontFamily: 'SanFrancisco',
-                                        ),
-                                      ),
-                                      backgroundColor: Colors.white,
-                                      selectedColor: Colors.grey.shade300,
-                                      selected: applyBeforeTax,
-                                      onSelected: (_) => setDialogState(() {
-                                        applyBeforeTax = true;
-                                      }),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: ChoiceChip(
-                                      label: const Text(
-                                        "After Tax",
-                                        style: TextStyle(
-                                          fontFamily: 'SanFrancisco',
-                                        ),
-                                      ),
-                                      backgroundColor: Colors.white,
-                                      selectedColor: Colors.grey.shade300,
-                                      selected: !applyBeforeTax,
-                                      onSelected: (_) => setDialogState(() {
-                                        applyBeforeTax = false;
-                                      }),
-                                    ),
-                                  ),
-                                ],
+                              const Text(
+                                "Discount Apply",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                  fontFamily: 'SanFrancisco',
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              ChoiceChip(
+                                label: const Text(
+                                  "Before Tax",
+                                  style: TextStyle(fontFamily: 'SanFrancisco'),
+                                ),
+                                backgroundColor: Colors.white,
+                                selectedColor: Colors.grey.shade300,
+                                selected: applyBeforeTax,
+                                onSelected: (_) => setDialogState(() {
+                                  applyBeforeTax = true;
+                                }),
+                              ),
+                              ChoiceChip(
+                                label: const Text(
+                                  "After Tax",
+                                  style: TextStyle(fontFamily: 'SanFrancisco'),
+                                ),
+                                backgroundColor: Colors.white,
+                                selectedColor: Colors.grey.shade300,
+                                selected: !applyBeforeTax,
+                                onSelected: (_) => setDialogState(() {
+                                  applyBeforeTax = false;
+                                }),
                               ),
                             ],
                           ),
@@ -423,7 +413,6 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                   discount.type == 'percentage';
                               final bool isSelected =
                                   selectedDiscountlist == discount.name;
-
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 8.0),
                                 child: FilterChip(
@@ -440,23 +429,17 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                       ],
                                     ),
                                   ),
-
                                   selected: isSelected,
-
-                                  // 🎨 Colors
                                   backgroundColor: Colors.white,
                                   selectedColor: Colors.grey.shade300,
                                   checkmarkColor: Colors.black,
                                   side: const BorderSide(color: Colors.black12),
-
                                   onSelected: (bool selected) {
                                     setDialogState(() {
                                       if (selected) {
                                         selectedDiscountlist = discount.name;
-
                                         offerType = "discount";
                                         tempIsFree = false;
-
                                         if (isPercentage) {
                                           double factor = discount.value;
                                           if (factor >= 1.0) factor /= 100;
@@ -467,13 +450,23 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                               discount.value * tempQty;
                                           item.discountType = "amount";
                                         }
-
-                                        // noteController.text = discount.name;
+                                        if (isPercentage == true) {
+                                          percentageController.text = discount
+                                              .value
+                                              .toString();
+                                          amountrsController.clear();
+                                        } else {
+                                          amountrsController.text = discount
+                                              .value
+                                              .toString();
+                                          percentageController.clear();
+                                        }
                                       } else {
-                                        // selectedDiscountlist = null;
+                                        selectedDiscountlist = "";
                                         tempDiscount = 0;
                                         item.discountType = null;
-                                        // noteController.text = "";
+                                        percentageController.clear();
+                                        amountrsController.clear();
                                       }
                                     });
                                   },
@@ -496,7 +489,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                         tempDiscount = subtotal * p / 100;
                                         item.discountType = "percentage";
                                       });
-                                    }),
+                                    }, percentageController),
                                     const SizedBox(height: 4),
                                     Text(
                                       "By percentage",
@@ -521,7 +514,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                                         tempDiscount = p * tempQty;
                                         item.discountType = "amount";
                                       });
-                                    }),
+                                    }, amountrsController),
                                     const SizedBox(height: 4),
                                     Text(
                                       "Discount Price (per item)",
@@ -618,9 +611,12 @@ class _OrderSidebarState extends State<OrderSidebar> {
     // String hint,
     String prefix,
     ValueChanged<String> onChanged,
+    TextEditingController controller,
   ) {
     return TextField(
       keyboardType: TextInputType.number,
+      style: const TextStyle(fontFamily: 'SanFrancisco'),
+      controller: controller,
       onChanged: onChanged,
       decoration: InputDecoration(
         // hintText: hint,
@@ -1558,7 +1554,6 @@ class _OrderSidebarState extends State<OrderSidebar> {
           ),
           const Divider(height: 1, color: Color(0xFFE2E8F0)),
           SizedBox(height: 6),
-
           // Customer Info
           if (customerSelected) ...[
             Row(
@@ -1581,7 +1576,7 @@ class _OrderSidebarState extends State<OrderSidebar> {
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   onPressed: widget.onCustomerClear,
-                  icon: const Icon(Icons.clear, color: Colors.red, size: 20),
+                  icon: const Icon(Icons.clear, color: Colors.red, size: 26),
                 ),
               ],
             ),

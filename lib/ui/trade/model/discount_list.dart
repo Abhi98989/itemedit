@@ -17,7 +17,7 @@ class CustomDiscount {
     return {'name': name, 'value': value, 'type': type};
   }
 
-  /// ✅ Static discount list
+  ///  discount list
   static final List<CustomDiscount> discountList = [
     CustomDiscount(name: 'Christmas Offer', value: 50, type: 'amount'),
     CustomDiscount(name: 'Weekend Offer', value: 10, type: 'percentage'),

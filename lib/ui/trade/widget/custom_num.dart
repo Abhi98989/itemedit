@@ -101,37 +101,37 @@ class _CustomKeyboardState extends State<CustomKeyboard> {
                       _buildNumRow(['4', '5', '6']),
                       _buildNumRow(['1', '2', '3']),
                       // Bottom row with wide 0 and dot
-                      _buildNumRow(['.', '0']),
-                      // SizedBox(
-                      //   height: 60,
-                      //   child: Padding(
-                      //     padding: const EdgeInsets.only(bottom: 6.0),
-                      //     child: Row(
-                      //       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      //       children: [
-                      //         _buildKeyButton("."),
-                      //         _buildKeyButton("0"),
-                      //         _buildKeyButton("00"),
-                      //       ],
-                      //     ),
-                      //   ),
-                      // ),
+                      if (widget.onPaymode != null)
+                        SizedBox(
+                          height: 65,
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 6.0),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(child: _buildKeyButton(".")),
+                                Expanded(child: _buildKeyButton("0")),
+                                Expanded(child: _buildKeyButton("00")),
+                              ],
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
                 const SizedBox(width: 8),
-
                 // Right Actions
                 Expanded(
                   child: Column(
                     children: [
-                      Expanded(
-                        child: _buildActionButton(
-                          icon: Icons.backspace_outlined,
-                          onTap: _backspace,
-                          color: Colors.orange[100]!,
+                      if (widget.onPaymode == null)
+                        Expanded(
+                          child: _buildActionButton(
+                            icon: Icons.backspace_outlined,
+                            onTap: _backspace,
+                            color: Colors.orange[100]!,
+                          ),
                         ),
-                      ),
                       const SizedBox(height: 8),
                       if (widget.onWidget != null)
                         Expanded(
@@ -282,7 +282,7 @@ class _CustomKeyboardState extends State<CustomKeyboard> {
 
   Widget _buildNumRow(List<String> keys) {
     return SizedBox(
-      height: 60,
+      height: 70,
       width: double.infinity,
       child: Padding(
         padding: const EdgeInsets.only(bottom: 6.0),
