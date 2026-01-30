@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../drawer/home_screen.dart';
+
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
 
@@ -116,21 +118,25 @@ class CustomDrawer extends StatelessWidget {
             child: Container(
               color: const Color(0xFFF8FAFB),
               child: ListView(
-                padding: const EdgeInsets.all(0),
+                padding: const EdgeInsets.symmetric(vertical: 4),
                 physics: const BouncingScrollPhysics(),
                 children: [
                   _drawerItem(
                     icon: Icons.home_outlined,
                     label: "Home",
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => HomeScreen()),
+                      );
+                    },
                   ),
 
                   _drawerItem(
-                    icon: Icons.fast_forward,
-                    label: "Quick PoS",
+                    icon: Icons.post_add_outlined,
+                    label: "Quick POS",
                     onTap: () {},
                   ),
-                  const SizedBox(height: 4),
                   _expansionDrawerItem(
                     icon: Icons.receipt_long_outlined,
                     label: "Receipts",
@@ -141,14 +147,11 @@ class CustomDrawer extends StatelessWidget {
                       _drawerSubItem("Delivery", () {}),
                     ],
                   ),
-                  const SizedBox(height: 4),
-
                   _drawerItem(
                     icon: Icons.person_outlined,
                     label: "Customers",
                     onTap: () {},
                   ),
-                  const SizedBox(height: 4),
                   _expansionDrawerItem(
                     icon: Icons.shopping_bag_outlined,
                     label: "Product Catalog",
@@ -158,8 +161,6 @@ class CustomDrawer extends StatelessWidget {
                       // _drawerSubItem("Product Category", () {}),
                     ],
                   ),
-
-                  const SizedBox(height: 4),
                   _expansionDrawerItem(
                     icon: Icons.shopping_cart_outlined,
                     label: "Sales",
@@ -170,35 +171,34 @@ class CustomDrawer extends StatelessWidget {
                     ],
                   ),
 
-                  // _expansionDrawerItem(
-                  //   icon: Icons.grid_view_outlined,
-                  //   label: "Order",
-                  //   children: [
-                  //     _drawerSubItem("New Order", () {}),
-                  //     _drawerSubItem("Order History", () {}),
-                  //   ],
-                  // ),
-                  // _expansionDrawerItem(
-                  //   icon: Icons.assignment_outlined,
-                  //   label: "Purchase",
-                  //   children: [
-                  //     _drawerSubItem("Purchase Entry", () {}),
-                  //     _drawerSubItem("Vendor List", () {}),
-                  //   ],
-                  // ),
+                  _expansionDrawerItem(
+                    icon: Icons.grid_view_outlined,
+                    label: "Order",
+                    children: [
+                      _drawerSubItem("New Order", () {}),
+                      _drawerSubItem("Order History", () {}),
+                    ],
+                  ),
+                  _expansionDrawerItem(
+                    icon: Icons.assignment_outlined,
+                    label: "Purchase",
+                    children: [
+                      _drawerSubItem("Purchase Entry", () {}),
+                      _drawerSubItem("Vendor List", () {}),
+                    ],
+                  ),
 
                   // const SizedBox(height: 4),
-                  // _drawerItem(
-                  //   icon: Icons.groups_outlined,
-                  //   label: "Party",
-                  //   onTap: () {},
-                  // ),
-
-                  // _drawerItem(
-                  //   icon: Icons.inventory_2_outlined,
-                  //   label: "Inventory",
-                  //   onTap: () {},
-                  // ),
+                  _drawerItem(
+                    icon: Icons.groups_outlined,
+                    label: "Party",
+                    onTap: () {},
+                  ),
+                  _drawerItem(
+                    icon: Icons.inventory_2_outlined,
+                    label: "Inventory Management",
+                    onTap: () {},
+                  ),
                   _drawerItem(
                     icon: Icons.payment_outlined,
                     label: "Payment",
@@ -217,7 +217,7 @@ class CustomDrawer extends StatelessWidget {
                     onTap: () {},
                   ),
                   _drawerItem(
-                    icon: Icons.settings,
+                    icon: Icons.settings_overscan_outlined,
                     label: "Setup",
                     onTap: () {},
                   ),
@@ -244,7 +244,6 @@ class CustomDrawer extends StatelessWidget {
                     onTap: () {},
                     iconColor: Colors.red.shade400,
                   ),
-                  const SizedBox(height: 20),
                   // Version Info at bottom
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -254,7 +253,7 @@ class CustomDrawer extends StatelessWidget {
                         Text(
                           "ezregi",
                           style: TextStyle(
-                            color: Colors.grey.shade500,
+                            color: Colors.black,
                             fontSize: 13,
                             fontFamily: 'SanFrancisco',
                           ),
@@ -265,13 +264,13 @@ class CustomDrawer extends StatelessWidget {
                             Icon(
                               Icons.info_outlined,
                               size: 16,
-                              color: Colors.grey.shade500,
+                              color: Colors.black,
                             ),
                             const SizedBox(width: 6),
                             Text(
                               "Version 1.0.0",
                               style: TextStyle(
-                                color: Colors.grey.shade500,
+                                color: Colors.black,
                                 fontSize: 13,
                                 fontFamily: 'SanFrancisco',
                               ),
@@ -307,6 +306,8 @@ class CustomDrawer extends StatelessWidget {
       child: Column(
         children: [
           ListTile(
+            dense: true,
+            visualDensity: const VisualDensity(vertical: -4),
             leading: Container(
               width: 40,
               height: 40,
@@ -321,7 +322,7 @@ class CustomDrawer extends StatelessWidget {
               style: const TextStyle(
                 color: Colors.black,
                 fontSize: 15,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
                 fontFamily: 'SanFrancisco',
                 letterSpacing: 0.2,
               ),
@@ -331,12 +332,9 @@ class CustomDrawer extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             hoverColor: const Color(0xFF81D43A).withValues(alpha: 0.05),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 4,
-            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
           ),
-          Divider(),
+          Divider(height: 1),
         ],
       ),
     );
@@ -358,6 +356,7 @@ class CustomDrawer extends StatelessWidget {
           Theme(
             data: ThemeData(dividerColor: Colors.transparent),
             child: ExpansionTile(
+              visualDensity: const VisualDensity(vertical: -4),
               leading: Container(
                 width: 40,
                 height: 40,
@@ -372,15 +371,12 @@ class CustomDrawer extends StatelessWidget {
                 style: const TextStyle(
                   color: Colors.black,
                   fontSize: 15,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w500,
                   fontFamily: 'SanFrancisco',
                   letterSpacing: 0.2,
                 ),
               ),
-              tilePadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 4,
-              ),
+              tilePadding: const EdgeInsets.symmetric(horizontal: 12),
               childrenPadding: const EdgeInsets.only(
                 left: 24,
                 right: 12,
@@ -397,7 +393,7 @@ class CustomDrawer extends StatelessWidget {
               children: children,
             ),
           ),
-          Divider(),
+          Padding(padding: const EdgeInsets.all(0), child: Divider(height: 1)),
         ],
       ),
     );

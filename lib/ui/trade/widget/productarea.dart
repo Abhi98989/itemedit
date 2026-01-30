@@ -336,7 +336,7 @@ class _MainProductAreaState extends State<MainProductArea> {
                   VerticalDivider(width: 1, thickness: 1, color: Colors.grey),
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
-                    width: showCategory ? 180 : 52,
+                    width: showCategory ? 180 : 55,
                     curve: Curves.easeInOut,
                     child: _actionIconButton(
                       showCategory ? Icons.chevron_left : Icons.chevron_right,
@@ -346,7 +346,7 @@ class _MainProductAreaState extends State<MainProductArea> {
                           showCategory = !showCategory;
                         });
                       },
-                      30,
+                      35,
                       Colors.grey,
                     ),
                   ),
@@ -513,58 +513,64 @@ class _MainProductAreaState extends State<MainProductArea> {
                 curve: Curves.easeInOut,
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  child: Container(
-                    width: 180,
-                    color: Colors.white,
-                    child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      itemCount: categories.length,
-                      itemBuilder: (context, index) {
-                        final category = categories[index];
-                        final isSelected =
-                            selectedCategory.categoryId == category.categoryId;
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedCategory = category;
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(8.0),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? Colors.white
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(3),
-                              border: Border(
-                                left: BorderSide(
-                                  color: isSelected
-                                      ? selectedCategory.color
-                                      : Colors.white,
-                                  width: 3,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Container(
+                      width: 180,
+                      color: Colors.white,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        itemCount: categories.length,
+                        itemBuilder: (context, index) {
+                          final category = categories[index];
+                          final isSelected =
+                              selectedCategory.categoryId ==
+                              category.categoryId;
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedCategory = category;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(8.0),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? Colors.white
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(3),
+                                border: Border(
+                                  left: BorderSide(
+                                    color: isSelected
+                                        ? selectedCategory.color
+                                        : Colors.white,
+                                    width: 3,
+                                  ),
+                                  bottom: BorderSide(
+                                    color: isSelected
+                                        ? selectedCategory.color
+                                        : Colors.white,
+                                    width: 0.6,
+                                  ),
                                 ),
-                                bottom: BorderSide(
+                              ),
+                              child: Text(
+                                category.categoryName,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
                                   color: isSelected
-                                      ? selectedCategory.color
-                                      : Colors.white,
-                                  width: 0.6,
+                                      ? Colors.black
+                                      : Colors.black,
+                                  fontFamily: 'SanFrancisco',
                                 ),
                               ),
                             ),
-                            child: Text(
-                              category.categoryName,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: isSelected
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                                color: isSelected ? Colors.black : Colors.black,
-                                fontFamily: 'SanFrancisco',
-                              ),
-                            ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
@@ -621,10 +627,9 @@ class _MainProductAreaState extends State<MainProductArea> {
             ],
           ),
         ),
-
         // Bottom Action Bar
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           decoration: BoxDecoration(
             color: Colors.white,
             boxShadow: [
@@ -738,16 +743,19 @@ class _MainProductAreaState extends State<MainProductArea> {
       onTap: onPressed,
       borderRadius: BorderRadius.circular(8),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 8.0,
+          vertical: 4,
+        ), // padding: const EdgeInsets.all(8.0),
         child: Row(
           children: [
             Icon(icon, size: size, color: color ?? const Color(0xFF64748B)),
-            const SizedBox(width: 6),
+            // const SizedBox(width: 6),
             Text(
               label,
               style: const TextStyle(
                 fontFamily: 'SanFrancisco',
-                fontSize: 14,
+                fontSize: 16,
                 color: Color(0xFF475569),
               ),
             ),

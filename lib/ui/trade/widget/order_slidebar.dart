@@ -1552,8 +1552,8 @@ class _OrderSidebarState extends State<OrderSidebar> {
               ],
             ),
           ),
+          SizedBox(height: 8),
           const Divider(height: 1, color: Color(0xFFE2E8F0)),
-          SizedBox(height: 6),
           // Customer Info
           if (customerSelected) ...[
             Row(

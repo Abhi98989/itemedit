@@ -55,7 +55,6 @@ class PaymentBody extends StatefulWidget {
 
 class _PaymentBodyState extends State<PaymentBody> {
   String _checkoutType = "Serve Now";
-
   final TextEditingController _tipController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
   final TextEditingController _refController = TextEditingController();
@@ -72,7 +71,6 @@ class _PaymentBodyState extends State<PaymentBody> {
   int _remainingSeconds = 0;
   Timer? _timer;
   bool _shouldClearAmountOnInput = false;
-
   @override
   void initState() {
     super.initState();
@@ -85,7 +83,6 @@ class _PaymentBodyState extends State<PaymentBody> {
     _deliveryAddressController = TextEditingController(
       text: widget.customerAddress,
     );
-    // Initial amount sync
     // Initial amount sync
     if (widget.selectedPayment.isNotEmpty && widget.enteredAmount.isEmpty) {
       _amount.text = widget.total.toStringAsFixed(2);
@@ -159,105 +156,165 @@ class _PaymentBodyState extends State<PaymentBody> {
     final addressController = TextEditingController(
       text: widget.customerAddress,
     );
+
     showDialog(
-      barrierDismissible: false,
+      barrierDismissible: true,
       context: context,
       builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: SizedBox(
-            width: 500,
-            child: AlertDialog(
-              contentPadding: const EdgeInsets.all(3),
-              backgroundColor: Colors.white,
-              title: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.close, color: Colors.black),
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                      ),
-                      Text(
-                        'Edit Details',
-                        style: TextStyle(
-                          fontFamily: 'SanFrancisco',
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        widget.customerName = nameController.text;
-                        widget.customerPhone = phoneController.text;
-                        widget.customerAddress = addressController.text;
-                        // Update delivery controllers as well
-                        _deliveryPhoneController.text = widget.customerPhone;
-                        _deliveryAddressController.text =
-                            widget.customerAddress;
-                      });
-                      Navigator.pop(context);
-                    },
-
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Color(0xff7CD23D)),
-                    ),
-
-                    child: const Text(
-                      'Save',
-                      style: TextStyle(
-                        fontFamily: 'SanFrancisco',
-                        color: Color(0xff7CD23D),
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              content: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+        filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+        child: Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
+          backgroundColor: Colors.white,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    TextField(
-                      controller: nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Name',
-                        labelStyle: TextStyle(fontFamily: 'SanFrancisco'),
-                      ),
+                    Row(
+                      spacing: 10,
+                      children: [
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(
+                            Icons.close,
+                            size: 22,
+                            color: Colors.black,
+                          ),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.grey.shade100,
+                            padding: EdgeInsets.zero,
+                          ),
+                        ),
+                        const Text(
+                          'Edit Details',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'SanFrancisco',
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: phoneController,
-                      decoration: const InputDecoration(
-                        labelText: 'Phone',
-                        labelStyle: TextStyle(fontFamily: 'SanFrancisco'),
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          widget.customerName = nameController.text;
+                          widget.customerPhone = phoneController.text;
+                          widget.customerAddress = addressController.text;
+                          _deliveryPhoneController.text = phoneController.text;
+                          _deliveryAddressController.text =
+                              addressController.text;
+                        });
+                        Navigator.pop(context);
+                      },
+
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        side: const BorderSide(color: Colors.grey),
                       ),
-                      keyboardType: TextInputType.phone,
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: addressController,
-                      decoration: const InputDecoration(
-                        labelText: 'Address',
-                        labelStyle: TextStyle(fontFamily: 'SanFrancisco'),
+                      child: const Text(
+                        'Save',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'SanFrancisco',
+                          color: Color(0xff7CD23D),
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 16),
+                _buildModernTextField(
+                  controller: nameController,
+                  label: 'Full Name',
+                  icon: Icons.person_outline,
+                ),
+                const SizedBox(height: 12),
+                _buildModernTextField(
+                  controller: phoneController,
+                  label: 'Phone Number',
+                  icon: Icons.phone_android_outlined,
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 12),
+                _buildModernTextField(
+                  controller: addressController,
+                  label: 'Delivery Address',
+                  icon: Icons.location_on_outlined,
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 24),
+
+                // SAVE BUTTON
+              ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildModernTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 6),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey.shade600,
+              fontFamily: 'SanFrancisco',
+            ),
+          ),
+        ),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          maxLines: maxLines,
+          style: const TextStyle(fontSize: 15, fontFamily: 'SanFrancisco'),
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon, size: 20, color: Colors.black),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+            // enabledBorder: OutlineInputBorder(
+            //   borderRadius: BorderRadius.circular(12),
+            //   borderSide: BorderSide(color: Colors.grey.shade200),
+            // ),
+            // focusedBorder: OutlineInputBorder(
+            //   borderRadius: BorderRadius.circular(12),
+            //   borderSide: const BorderSide(
+            //     color: Color(0xff7CD23D),
+            //     width: 1.5,
+            //   ),
+            // ),
+          ),
+        ),
+      ],
     );
   }
 
